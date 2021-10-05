@@ -1,12 +1,15 @@
 import numpy as np
+import pandas as pd
 
 from src.measurements.Measurements import mean_square_error
 from src.preprocessing.load_dataset import get_dataset
 
 
 def fill_nan(temp_array: np.ndarray):
-    temp_mean = np.nanmean(temp_array).sum()
-    return np.nan_to_num(temp_array, nan=temp_mean)
+    df = pd.DataFrame(temp_array)
+    df.columns = ["data"]
+    df = df.ffill()
+    return df["data"].to_numpy().reshape(-1, 1)
 
 
 if __name__ == '__main__':
