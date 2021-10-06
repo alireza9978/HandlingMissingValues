@@ -1,6 +1,6 @@
 import importlib
-
-from src.measurements.Measurements import mean_square_error
+import numpy as np
+from src.measurements.Measurements import calculate_measures
 from src.preprocessing.load_dataset import get_dataset
 
 methods = [importlib.import_module("Simple.Total Mean"),
@@ -13,4 +13,7 @@ method_name = ["Total Mean",
 
 x, x_nan = get_dataset()
 for i in range(len(method_name)):
-    print(method_name[i], mean_square_error(x, methods[i].fill_nan(x_nan)))
+    filled_x, nan_index = methods[i].fill_nan(x_nan)
+    print(method_name[i])
+    calculate_measures(x[nan_index], filled_x)
+    print()
