@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def mean_square_error(x: np.ndarray, x_filled_nan: np.ndarray):
@@ -25,6 +26,17 @@ def mean_absolute_percentage_error(x: np.ndarray, x_filled_nan: np.ndarray):
     diff_percent_abs = np.abs(diff_percent)
     diff_percent_abs_mean = np.mean(diff_percent_abs)
     return np.multiply(diff_percent_abs_mean, 100)
+
+
+def evaluate_dataframe(temp_df: pd.DataFrame, evaluation_function):
+    def inner_process(user_df):
+        filled_value = user_df[0]
+        filled_index = user_df[1]
+        real_values = user_df[2].usage[filled_index].to_numpy().reshape(-1, 1)
+        return evaluation_function(real_values, filled_value)
+
+    users_mean_square_error = temp_df.apply(inner_process, axis=1)
+    return users_mean_square_error.mean()
 
 
 def calculate_measures(x: np.ndarray, x_filled_nan: np.ndarray):
