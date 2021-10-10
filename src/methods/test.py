@@ -1,27 +1,40 @@
 import importlib
 
 from src.measurements.Measurements import *
-from src.preprocessing.load_dataset import get_dataset
+from src.preprocessing.load_dataset import get_dataset, get_dataset_with_modified_date
 
 measures = [mean_square_error, mean_absolute_error, mean_absolute_percentage_error]
 
-methods = [importlib.import_module("Simple.Total Mean"),
-           importlib.import_module("Simple.Total Median"),
-           importlib.import_module("Simple.First Observation Carried Backward"),
-           importlib.import_module("Simple.Last Observation Carried Forward"),
-           importlib.import_module("Simple.Interpolation")]
+methods_single_feature = [importlib.import_module("Simple.Total Mean"),
+                          importlib.import_module("Simple.Total Median"),
+                          importlib.import_module("Simple.First Observation Carried Backward"),
+                          importlib.import_module("Simple.Last Observation Carried Forward"),
+                          importlib.import_module("Simple.Interpolation")]
 
-method_name = ["Total Mean",
-               "Total Median",
-               "First Observation Carried Backward",
-               "Last Observation Carried Forward",
-               "Interpolation"]
+method_name_single_feature = ["Total Mean",
+                              "Total Median",
+                              "First Observation Carried Backward",
+                              "Last Observation Carried Forward",
+                              "Interpolation"]
+
+methods_multiple_feature = [importlib.import_module("Regression.Linear"),
+                            importlib.import_module("Hot Deck.Hot Deck")]
+
+method_name_multiple_feature = ["Linear Regression",
+                                "Hot Deck"]
 
 x, x_nan = get_dataset()
-for i in range(len(method_name)):
-    filled_users = x_nan.groupby("id").apply(methods[i].fill_nan)
+for i in range(len(method_name_single_feature)):
+    filled_users = x_nan.groupby("id").apply(methods_single_feature[i].fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-    print(method_name[i])
+    print(method_name_single_feature[i])
     for measure in measures:
         print(evaluate_dataframe(filled_users, measure))
-    print()
+
+x, x_nan = get_dataset_with_modified_date()
+for i in range(len(methods_multiple_feature)):
+    filled_users = x_nan.groupby("id").apply(methods_multiple_feature[i].fill_nan)
+    filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+    print(method_name_multiple_feature[i])
+    for measure in measures:
+        print(evaluate_dataframe(filled_users, measure))
