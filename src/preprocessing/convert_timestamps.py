@@ -1,11 +1,11 @@
-import pandas as pd
 import numpy as np
-from load_dataset import generate_small_pandas_dataset
+import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
-if __name__ == '__main__':
-    temp_df = generate_small_pandas_dataset()
+root = "/home/alireza/projects/python/HandlingMissingValues/"
 
+
+def convert_date(temp_df: pd.DataFrame):
     temp_df["day"] = temp_df.date.dt.day
     temp_df["month"] = temp_df.date.dt.month
     temp_df["year"] = temp_df.date.dt.year
@@ -25,6 +25,12 @@ if __name__ == '__main__':
         temp_df[column + "_y"] = np.cos(temp_df[column])
 
     temp_df = temp_df.drop(columns=selected_columns + ["date"])
-    temp_df.to_csv(
-        "C:/Users/Alireza/PycharmProjects/HandlingMissingValues/datasets/smart_star_small_date_modified.csv",
-        index=False)
+    return temp_df
+
+
+if __name__ == '__main__':
+    from load_dataset import generate_small_pandas_dataset
+
+    main_df = generate_small_pandas_dataset()
+    main_df = convert_date(main_df)
+    main_df.to_csv(root + "datasets/smart_star_small_date_modified.csv", index=False)
