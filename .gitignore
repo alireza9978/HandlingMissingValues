@@ -128,6 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/datasets
+/datasets/
 /results/
 /raw_dataset/*
+/venv_36/

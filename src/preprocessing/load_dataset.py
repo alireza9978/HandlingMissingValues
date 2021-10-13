@@ -3,7 +3,7 @@ import pandas as pd
 
 from src.preprocessing.convert_timestamps import convert_date
 
-root = "/home/alireza/projects/python/HandlingMissingValues/"
+root = "E:/HandlingMissingValues/"
 
 
 def get_dataset():
