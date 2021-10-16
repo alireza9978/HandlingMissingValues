@@ -131,4 +131,6 @@ dmypy.json
 /datasets/
 /results/
 /raw_dataset/*
+/plots/
 /venv_36/
+/venv_39/

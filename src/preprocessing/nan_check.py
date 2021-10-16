@@ -5,11 +5,11 @@ import pandas as pd
 root = "/home/alireza/projects/python/HandlingMissingValues/"
 
 
-def method_one():
-    main_df = pd.read_csv(root + "datasets/smart_star.csv")
+def method_one(path: str, name: str):
+    main_df = pd.read_csv(path)
     main_df.date = pd.to_datetime(main_df.date)
     nan_df = main_df.groupby("id").apply(lambda x: x.usage.isna().sum())
-    nan_df.to_csv(root + "results/nan.csv")
+    nan_df.to_csv(root + "results/{}_nan.csv".format(name))
 
 
 def method_two():
@@ -37,5 +37,19 @@ def method_two_weather():
             print(temp_df.isna().sum())
 
 
+def method_three(root_path, files):
+    for file in files:
+        item_path = root_path + file
+        temp_df = pd.read_csv(item_path)
+        if temp_df.isna().sum().sum() != 0:
+            print(file)
+            print(temp_df.isna().sum())
+
+
 if __name__ == '__main__':
-    method_two_weather()
+    irish_path = "/mnt/79e06c5d-876b-45fd-a066-c9aac1a1c932/Dataset/Power Distribution/irish.csv"
+    # smart_star_path = root + "datasets/smart_star.csv"
+    # method_one(irish_path, "irish")
+    # method_one(smart_star_path, "smart_star")
+    # method_three("/mnt/6EFAD426FAD3E7FB/datasets/HUE/", ["Residential_{}.csv".format(i) for i in range(1, 28)])
+    # method_three("/mnt/6EFAD426FAD3E7FB/datasets/Smart meter in london/files/", ["block_{}.csv".format(i) for i in range(1, 111)])

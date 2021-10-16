@@ -15,6 +15,11 @@ def get_dataset():
     return main_df, main_df_with_nan
 
 
+def get_dataset_irish():
+    main_df = pd.read_csv("/mnt/79e06c5d-876b-45fd-a066-c9aac1a1c932/Dataset/Power Distribution/irish.csv")
+    main_df.date = pd.to_datetime(main_df.date)
+    return main_df
+
 def get_dataset_with_modified_date():
     main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_small_date_modified_0.01.csv")
     main_df = pd.read_csv(root + "datasets/smart_star_small_date_modified.csv")
