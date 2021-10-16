@@ -1,20 +1,10 @@
-import multiprocessing
-
 import numpy as np
 import pandas as pd
-import swifter
-from joblib import Parallel, delayed
+from sklearn.metrics.pairwise import euclidean_distances
 
 from src.measurements.Measurements import mean_square_error, evaluate_dataframe
 from src.preprocessing.load_dataset import get_dataset_with_modified_date
-
-a = swifter.config
-
-
-def apply_parallel(data_frame_grouped, func):
-    result_list = Parallel(n_jobs=multiprocessing.cpu_count())(
-        delayed(func)(group) for name, group in data_frame_grouped)
-    return pd.concat(result_list)
+from src.utils.parallelizem import apply_parallel
 
 
 def fill_nan(temp_array: np.ndarray):
@@ -24,25 +14,20 @@ def fill_nan(temp_array: np.ndarray):
 
     def get_nearest_usage(row: pd.Series):
         temp_row = row.drop(["id", "usage"]).to_numpy()
-
-        def distance(inner_row: pd.Series):
-            temp_usage = inner_row["usage"]
-            temp_distance = np.sum(np.square(inner_row.drop(["id", "usage"]).to_numpy() - temp_row))
-            return pd.Series([temp_distance, temp_usage])
-
-        calculated_distances = complete_row.swifter.apply(distance, axis=1)
-        calculated_distances = calculated_distances.sort_values(by=0)
+        calculated_distances = euclidean_distances(complete_row.drop(columns=["id", "usage"]).to_numpy(),
+                                                   temp_row.reshape(1, -1))
+        temp_dict = {"distance": calculated_distances.squeeze(), "usage": complete_row.usage}
+        calculated_distances = pd.DataFrame(temp_dict)
+        calculated_distances = calculated_distances.sort_values(by="distance")
+        calculated_distances = calculated_distances.reset_index()
         return calculated_distances.loc[0][1]
 
-    filled_nan = nan_row.swifter.apply(get_nearest_usage, axis=1)
-    return pd.Series([filled_nan, temp_nan_index])
+    filled_nan = nan_row.apply(get_nearest_usage, axis=1)
+    return pd.Series([filled_nan.to_numpy().reshape(-1, 1), temp_nan_index])
 
 
 if __name__ == '__main__':
     x, x_nan = get_dataset_with_modified_date()
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
-    print("here")
-    filled_users[2] = filled_users[1].swifter.apply(lambda idx: x.loc[idx])
-    print("here2")
+    filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
-    print("here3")
