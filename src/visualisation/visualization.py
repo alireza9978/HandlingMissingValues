@@ -12,7 +12,7 @@ def plot_result(temp_df: pd.DataFrame):
 
     fig, ax = plt.subplots()
     list_reacts = []
-    for i, col in enumerate(temp_df.drop(columns=["name"]).columns):
+    for i, col in enumerate(temp_df.drop(columns=["Method"]).columns):
         model = MinMaxScaler()
         y = model.fit_transform(temp_df[col].to_numpy().reshape(-1, 1)).squeeze()
         list_reacts.append(ax.bar(x + (i * width), y, width, label=col))
@@ -27,5 +27,7 @@ def plot_result(temp_df: pd.DataFrame):
     for react in list_reacts:
         ax.bar_label(react, padding=3)
 
-    fig.tight_layout()
+    mngr = plt.get_current_fig_manager()
+    mngr.window.setGeometry(50, 50, 960, 640)
+    plt.tight_layout()
     plt.show()

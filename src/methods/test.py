@@ -4,19 +4,24 @@ from src.measurements.Measurements import *
 from src.preprocessing.load_dataset import get_dataset
 from src.visualisation.visualization import plot_result
 
+root_path = "/home/alireza/projects/python/HandlingMissingValues/"
 measures = [mean_square_error, mean_absolute_error, mean_absolute_percentage_error]
 
-methods_single_feature = [importlib.import_module("Simple.Total Mean"),
-                          importlib.import_module("Simple.Total Median"),
-                          importlib.import_module("Simple.First Observation Carried Backward"),
-                          importlib.import_module("Simple.Last Observation Carried Forward"),
-                          importlib.import_module("Simple.Interpolation")]
+methods_single_feature = [
+    importlib.import_module("Simple.Total Mean"),
+    importlib.import_module("Simple.Total Median"),
+    importlib.import_module("Simple.FirstObservationCarriedBackward"),
+    importlib.import_module("Simple.LastObservationCarriedForward"),
+    importlib.import_module("Simple.Interpolation")
+]
 
-method_name_single_feature = ["Total Mean",
-                              "Total Median",
-                              "First Observation Carried Backward",
-                              "Last Observation Carried Forward",
-                              "Interpolation"]
+method_name_single_feature = [
+    "Total Mean",
+    "Total Median",
+    "First Observation Carried Backward",
+    "Last Observation Carried Forward",
+    "Interpolation"
+]
 
 methods_multiple_feature = [importlib.import_module("Regression.Linear"),
                             importlib.import_module("Hot Deck.Hot Deck")]
@@ -46,5 +51,7 @@ for i in range(len(method_name_single_feature)):
 #         print(evaluate_dataframe(filled_users, measure))
 
 
-result_df.columns = ["name", "mean_square_error", "mean_absolute_error", "mean_absolute_percentage_error"]
+result_df.columns = ["Method", "Mean Square Error", "Mean Absolute Error", "Mean Absolute Percentage Error"]
 plot_result(result_df)
+
+result_df.to_csv(root_path + "results/methods result.csv", index=False)
