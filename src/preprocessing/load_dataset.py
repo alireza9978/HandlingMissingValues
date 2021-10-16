@@ -1,15 +1,16 @@
 import numpy as np
 import pandas as pd
-
+from pathlib import Path
 from src.preprocessing.convert_timestamps import convert_date
 
-# root = "E:/HandlingMissingValues/"
-root = "/home/alireza/projects/python/HandlingMissingValues/"
+# root = "E:/HandlingMissingValues/datasets/"
+# root = "/home/alireza/projects/python/HandlingMissingValues/datasets/"
+root = 'h:/Projects/Datasets/Smart/'
 
 
 def get_dataset():
-    main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_small_0.01.csv")
-    main_df = pd.read_csv(root + "datasets/smart_star_small.csv")
+    main_df_with_nan = pd.read_csv(Path(root + "with_nan/smart_star_small_0.01.csv"))
+    main_df = pd.read_csv(Path(root + "smart_star_small.csv"))
 
     main_df.date = pd.to_datetime(main_df.date)
     main_df_with_nan.date = pd.to_datetime(main_df_with_nan.date)
@@ -20,6 +21,7 @@ def get_dataset_irish():
     main_df = pd.read_csv("/mnt/79e06c5d-876b-45fd-a066-c9aac1a1c932/Dataset/Power Distribution/irish.csv")
     main_df.date = pd.to_datetime(main_df.date)
     return main_df
+
 
 def get_dataset_with_modified_date():
     main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_small_date_modified_0.01.csv")
