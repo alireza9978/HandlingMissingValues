@@ -1,8 +1,5 @@
 import numpy as np
 import pandas as pd
-import swifter
-
-a = swifter.config
 
 
 def mean_square_error(x: np.ndarray, x_filled_nan: np.ndarray):
@@ -32,6 +29,9 @@ def mean_absolute_percentage_error(x: np.ndarray, x_filled_nan: np.ndarray):
 
 
 def evaluate_dataframe(temp_df: pd.DataFrame, evaluation_function):
+    import swifter
+    _ = swifter.config
+
     def inner_process(user_df):
         filled_value = user_df[0]
         filled_index = user_df[1]
