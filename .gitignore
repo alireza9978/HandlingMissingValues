@@ -128,7 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/datasets
+/datasets/
 /results/
 /raw_dataset/*
 /plots/
+/venv_36/
+/venv_39/

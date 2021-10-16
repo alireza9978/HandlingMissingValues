@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import swifter
+
+a = swifter.config
 
 
 def mean_square_error(x: np.ndarray, x_filled_nan: np.ndarray):
@@ -35,8 +38,8 @@ def evaluate_dataframe(temp_df: pd.DataFrame, evaluation_function):
         real_values = user_df[2].usage[filled_index].to_numpy().reshape(-1, 1)
         return evaluation_function(real_values, filled_value)
 
-    users_mean_square_error = temp_df.apply(inner_process, axis=1)
-    return users_mean_square_error.mean()
+    users_error = temp_df.swifter.apply(inner_process, axis=1)
+    return users_error.mean()
 
 
 def calculate_measures(x: np.ndarray, x_filled_nan: np.ndarray):
