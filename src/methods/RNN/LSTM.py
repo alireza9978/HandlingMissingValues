@@ -79,7 +79,9 @@ def fill_nan(user):
     extra = np.array(extra)
     extra = np.reshape(extra, (extra.shape[0]))
     prediction = np.concatenate((extra,prediction),axis=0)
+    prediction = prediction.reshape(1,-1)
     prediction = scaler.inverse_transform(prediction)
+    prediction = prediction.reshape(prediction.shape[1])
     return pd.Series([prediction,nan_index])
 
 
