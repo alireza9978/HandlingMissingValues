@@ -3,18 +3,27 @@ import pandas as pd
 from pathlib import Path
 from src.preprocessing.convert_timestamps import convert_date
 
-# root = "E:/HandlingMissingValues/datasets/"
-# root = "/home/alireza/projects/python/HandlingMissingValues/datasets/"
-root = 'h:/Projects/Datasets/Smart/'
+# root = "E:/HandlingMissingValues/"
+root = "/home/alireza/projects/python/HandlingMissingValues/"
+# root = 'h:/Projects/Datasets/Smart/'
 
 
 def get_dataset():
-    main_df_with_nan = pd.read_csv(Path(root + "with_nan/smart_star_small_0.01.csv"))
-    main_df = pd.read_csv(Path(root + "smart_star_small.csv"))
+    main_df_with_nan = pd.read_csv(Path(root + "datasets/with_nan/smart_star_hourly_0.01.csv"))
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
 
     main_df.date = pd.to_datetime(main_df.date)
     main_df_with_nan.date = pd.to_datetime(main_df_with_nan.date)
     return main_df, main_df_with_nan
+
+
+def get_complete_dataset():
+    modified_main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_hourly_fully_modified_0.01.csv")
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
+
+    main_df.date = pd.to_datetime(main_df.date)
+    modified_main_df_with_nan["date"] = main_df.date
+    return main_df, modified_main_df_with_nan
 
 
 def get_dataset_irish():
@@ -23,16 +32,9 @@ def get_dataset_irish():
     return main_df
 
 
-def get_dataset_with_modified_date():
-    main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_small_date_modified_0.01.csv")
-    main_df = pd.read_csv(root + "datasets/smart_star_small_date_modified.csv")
-
-    return main_df, main_df_with_nan
-
-
 def get_dataset_fully_modified_date():
-    main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_small_fully_modified_0.01.csv")
-    main_df = pd.read_csv(root + "datasets/smart_star_small_fully_modified.csv")
+    main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_hourly_fully_modified_0.01.csv")
+    main_df = pd.read_csv(root + "datasets/smart_star_hourly_fully_modified.csv")
 
     return main_df, main_df_with_nan
 
@@ -56,7 +58,7 @@ def load_weather_dataset():
 
 
 def add_holiday_weather_convert_date():
-    main_df = pd.read_csv(root + "datasets/smart_star_small.csv")
+    main_df = pd.read_csv(root + "datasets/smart_star_hourly.csv")
     main_df.date = pd.to_datetime(main_df.date)
     holiday_df = pd.read_csv(root + "datasets/holiday.csv")
     holiday_df["date"] = pd.to_datetime(holiday_df.date)
@@ -65,12 +67,15 @@ def add_holiday_weather_convert_date():
     main_df = main_df.set_index("only_date").join(holiday_df).reset_index(drop=True)
 
     weather_df = load_weather_dataset()
+    weather_df = weather_df.ffill()
     weather_df = weather_df.set_index("date")
     main_df = main_df.set_index("date").join(weather_df).reset_index(drop=False)
 
+    main_df = main_df.sort_values(["id", "date"])
+    main_df = main_df.reset_index(drop=True)
     main_df = convert_date(main_df)
 
-    main_df.to_csv(root + "datasets/smart_star_small_fully_modified.csv", index=False)
+    main_df.to_csv(root + "datasets/smart_star_hourly_fully_modified.csv", index=False)
 
 
 if __name__ == '__main__':

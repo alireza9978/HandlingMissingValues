@@ -5,7 +5,7 @@ nan_percents = [0.01, 0.05]
 root = "/home/alireza/projects/python/HandlingMissingValues/"
 
 if __name__ == '__main__':
-    file_name = "smart_star_small_fully_modified"
+    file_name = "smart_star_hourly_fully_modified"
     main_df = pd.read_csv(root + "datasets/{}.csv".format(file_name))
 
     for percent in nan_percents:
