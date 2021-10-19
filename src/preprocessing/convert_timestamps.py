@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
-root = "/home/alireza/projects/python/HandlingMissingValues/"
+from src.preprocessing.load_dataset import root
 
 
 def convert_date(temp_df: pd.DataFrame):

@@ -3,9 +3,9 @@ import os
 from tempfile import tempdir
 
 import pandas as pd
+from src.preprocessing.load_dataset import root
 
 years = ["2014", "2015", "2016"]
-root = "/home/alireza/projects/python/HandlingMissingValues/"
 
 
 def merge_usage():

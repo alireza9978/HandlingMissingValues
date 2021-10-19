@@ -1,6 +1,7 @@
 import pandas as pd
-
 import requests
+
+from src.preprocessing.load_dataset import root
 
 if __name__ == '__main__':
     api_key = "api_key=738864c7e21a512f880681fd2e0c5f735f7a7c6b"
@@ -41,4 +42,4 @@ if __name__ == '__main__':
             df.loc[df['date'] == str(pd.to_datetime(date).date()), 'holiday'] = True
 
     df.loc[(df['day_of_week'] == 5) | (df['day_of_week'] == 6), 'weekend'] = True
-    df.to_csv("/home/alireza/projects/python/HandlingMissingValues/datasets/holiday.csv", index=False)
+    df.to_csv(root + "datasets/holiday.csv", index=False)
