@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 
 from src.measurements.Measurements import mean_square_error, evaluate_dataframe
-from src.preprocessing.load_dataset import get_dataset_with_modified_date
+from src.preprocessing.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
 
 
@@ -27,7 +27,7 @@ def fill_nan(temp_array: np.ndarray):
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset_with_modified_date()
+    x, x_nan = get_dataset_fully_modified_date()
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
