@@ -34,7 +34,7 @@ def fill_nan(temp_df: pd.DataFrame):
         x_train = temp_x[not_nan_index.squeeze()]
         x_test = temp_x[nan_index.squeeze()]
 
-        degree = 2
+        degree = 10
         polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
         polynomial_reg.fit(x_train, y_train)
         pred = polynomial_reg.predict(x_test).squeeze()

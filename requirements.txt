@@ -7,3 +7,6 @@ joblib~=1.1.0
 swifter~=1.0.9
 matplotlib~=3.4.3
 keras~=2.6.0
+tensorflow~=2.6.0
+scipy~=1.7.1
+tqdm~=4.62.3
