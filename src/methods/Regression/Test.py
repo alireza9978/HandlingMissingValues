@@ -7,8 +7,8 @@ from sklearn.preprocessing import PolynomialFeatures
 
 if __name__ == '__main__':
     x = np.array([1, 1, 1, 1, 1.25, 1.5, 1.75, 2, 1.75, 1.5, 1.25, 1, 0.5, 0, 0.5, 1, 1.5, 2, 2.5, 2, 1, 0.5, 0, 0])
-    x_nan = np.array([1, 1, 1, 1, 1.25, np.nan, 1.75, 2, 1.75, 1.5, 1.25, 1,
-                      0.5, np.nan, 0.5, 1, 1.5, 2, 2.5, 2, 1, 0.5, 0, 0])
+    x_nan = np.array([1, 1, 1, 1, 1.25, np.nan, 1.75, 2, 1.75, np.nan, 1.25, 0.75,
+                      0.5, 0.5, 0.5, 1, np.nan, np.nan, np.nan, np.nan, 1, 0.5, 0, 0])
 
     temp_df = pd.DataFrame(x_nan)
     indexes = np.array(list(range(x.shape[0])))
@@ -56,17 +56,17 @@ if __name__ == '__main__':
     # pred = polynomial_reg.predict(x_test).squeeze()
     # plt.plot(indexes, pred, label="polynomial_regression_6")
     #
-    # degree = 7
-    # polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-    # polynomial_reg.fit(x_train, y_train)
-    # pred = polynomial_reg.predict(x_test).squeeze()
-    # plt.plot(indexes, pred, label="polynomial_regression_7")
-    #
-    # degree = 8
-    # polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-    # polynomial_reg.fit(x_train, y_train)
-    # pred = polynomial_reg.predict(x_test).squeeze()
-    # plt.plot(indexes, pred, label="polynomial_regression_8")
+    degree = 7
+    polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+    polynomial_reg.fit(x_train, y_train)
+    pred = polynomial_reg.predict(x_test).squeeze()
+    plt.plot(indexes, pred, label="polynomial_regression_7")
+
+    degree = 8
+    polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+    polynomial_reg.fit(x_train, y_train)
+    pred = polynomial_reg.predict(x_test).squeeze()
+    plt.plot(indexes, pred, label="polynomial_regression_8")
 
     # degree = 9
     # polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
@@ -91,12 +91,12 @@ if __name__ == '__main__':
     # polynomial_reg.fit(x_train, y_train)
     # pred = polynomial_reg.predict(x_test).squeeze()
     # plt.plot(indexes, pred, label="polynomial_regression_12")
-    #
-    # degree = 13
-    # polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-    # polynomial_reg.fit(x_train, y_train)
-    # pred = polynomial_reg.predict(x_test).squeeze()
-    # plt.plot(indexes, pred, label="polynomial_regression_13")
+
+    degree = 13
+    polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+    polynomial_reg.fit(x_train, y_train)
+    pred = polynomial_reg.predict(x_test).squeeze()
+    plt.plot(indexes, pred, label="polynomial_regression_13")
     #
     # degree = 14
     # polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
