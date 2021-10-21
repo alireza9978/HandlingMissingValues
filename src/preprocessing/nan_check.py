@@ -1,8 +1,6 @@
 import os
-
+from src.preprocessing.load_dataset import root
 import pandas as pd
-
-root = "/home/alireza/projects/python/HandlingMissingValues/"
 
 
 def method_one(path: str, name: str):

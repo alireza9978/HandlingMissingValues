@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
 
-nan_percents = [0.01, 0.05]
-root = "/home/alireza/projects/python/HandlingMissingValues/"
+from src.preprocessing.load_dataset import root
+
+nan_percents = [0.01, 0.05, 0.10, 0.20, 0.30]
 
 if __name__ == '__main__':
-    file_name = "smart_star_hourly_fully_modified"
+    file_name = "smart_star_hourly"
     main_df = pd.read_csv(root + "datasets/{}.csv".format(file_name))
 
     for percent in nan_percents:

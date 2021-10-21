@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
-root = "/home/alireza/projects/python/HandlingMissingValues/"
-
 
 def convert_date(temp_df: pd.DataFrame):
     temp_df["day"] = temp_df.date.dt.day
@@ -29,7 +27,7 @@ def convert_date(temp_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    from load_dataset import generate_small_pandas_dataset
+    from load_dataset import generate_small_pandas_dataset, root
 
     main_df = generate_small_pandas_dataset()
     main_df = convert_date(main_df)
