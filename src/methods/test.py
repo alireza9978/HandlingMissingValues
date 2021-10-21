@@ -13,9 +13,6 @@ methods_single_feature = [
     importlib.import_module("Simple.FirstObservationCarriedBackward"),
     importlib.import_module("Simple.LastObservationCarriedForward"),
     importlib.import_module("Simple.Interpolation"),
-    importlib.import_module("MovingWindow.ExponentialMean"),
-    importlib.import_module("MovingWindow.Mean"),
-    importlib.import_module("MovingWindow.Weighted")
 ]
 
 method_name_single_feature = [
@@ -24,9 +21,18 @@ method_name_single_feature = [
     "First Observation Carried Backward",
     "Last Observation Carried Forward",
     "Interpolation",
-    "Moving Window Exponential Mean",
+]
+
+method_single_feature_window = [
+    importlib.import_module("MovingWindow.Mean"),
+    importlib.import_module("MovingWindow.WeightedMean"),
+    importlib.import_module("MovingWindow.ExponentialMean")
+]
+
+method_name_single_feature_window = [
     "Moving Window Mean",
     "Moving Window Weighted Mean",
+    "Moving Window Exponential Mean",
 ]
 
 methods_multiple_feature = [importlib.import_module("Regression.Linear"),
@@ -52,6 +58,20 @@ for i in range(len(method_name_single_feature)):
         temp_result_list.append(measured_value)
     print("method {} finished".format(method_name_single_feature[i]))
     result_df.append(pd.Series(temp_result_list), ignore_index=True)
+
+for i in range(len(method_name_single_feature_window)):
+    window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
+    for window_index in range(len(window_sizes)):
+        window_size = window_sizes[window_index]
+        method_single_feature_window[i].window_size = window_size
+        filled_users = x_nan.groupby("id").apply(method_single_feature_window[i].fill_nan)
+        filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+        temp_result_list = ["{}_window_{}".format(method_name_single_feature_window[i], window_size)]
+        for measure in measures:
+            measured_value = evaluate_dataframe(filled_users, measure)
+            temp_result_list.append(measured_value)
+        result_df.append(pd.Series(temp_result_list), ignore_index=True)
+    print("method {} finished".format(method_name_single_feature_window[i]))
 
 x, x_nan = get_dataset_fully_modified_date()
 for i in range(len(methods_multiple_feature)):
