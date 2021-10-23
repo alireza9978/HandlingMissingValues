@@ -6,10 +6,18 @@ from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_dataset
 from src.utils.parallelizem import apply_parallel
 
+window_size = None
+stds = [1, 2, 3, 4, 5, 6, 8, 12, 18]
+window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
+
 
 def fill_nan(temp_df: pd.DataFrame):
     import swifter
     _ = swifter.config
+    std = None
+    for window_index in range(len(window_sizes)):
+        if window_sizes[window_index] == window_size:
+            std = stds[window_index]
     temp_df = temp_df.reset_index(drop=True)
     temp_array = temp_df.usage.to_numpy().reshape(-1, 1)
     final_temp_nan_index = np.where(np.isnan(temp_array))[0]
@@ -38,12 +46,8 @@ def fill_nan(temp_df: pd.DataFrame):
 
 if __name__ == '__main__':
     x, x_nan = get_dataset()
-    window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
-    stds = [1, 2, 3, 4, 5, 6, 8, 12, 18]
-    # window_sizes = [24]
     for i in range(len(window_sizes)):
         window_size = window_sizes[i]
-        std = stds[i]
         filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
         filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
         print("window size = ", window_size)

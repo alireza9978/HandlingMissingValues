@@ -5,6 +5,8 @@ from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_dataset
 from src.utils.parallelizem import apply_parallel
 
+window_size = None
+
 
 def fill_nan(temp_df: pd.DataFrame):
     import swifter
