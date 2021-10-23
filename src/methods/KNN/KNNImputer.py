@@ -21,6 +21,8 @@ def fill_nan(user: pd.DataFrame):
     imputer = KNNImputer(n_neighbors=5, weights='uniform', metric='nan_euclidean')
     # fit on the dataset
     imputer.fit_transform(user)
+    filled_nans = user[nan_index]
+    return pd.Series[filled_nans,nan_index]
 
 
 if __name__ == '__main__':
