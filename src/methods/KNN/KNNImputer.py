@@ -14,19 +14,20 @@ def normalize_user_usage(user):
 
 
 def fill_nan(user: pd.DataFrame):
+    user = user.copy()
     # getting the nan indexes
     nan_row = user[user["usage"].isna()]
     nan_index = nan_row.index.to_numpy()
     # define imputer
     imputer = KNNImputer(n_neighbors=5, weights='uniform', metric='nan_euclidean')
     # fit on the dataset
-    imputer.fit_transform(user)
-    filled_nans = user[nan_index]
-    return pd.Series[filled_nans,nan_index]
+    user['usage'] = imputer.fit_transform(user)[:,1] # change 1 to the number of column containing missing values
+    filled_nans = user.loc[nan_index]
+    return pd.Series([filled_nans['usage'],nan_index])
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset_fully_modified_date()
+    x, x_nan = get_dataset_fully_modified_date(nan_percent='0.05')
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
