@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -14,6 +15,7 @@ class SmallNeuralNet:
     def __init__(self, temp_df: pd.DataFrame, x_scaler, y_scaler):
         self.id = SmallNeuralNet.id
         SmallNeuralNet.id += 1
+        self.history = None
         self.training_epoch = 50
         self.x_scaler = x_scaler
         self.y_scaler = y_scaler
@@ -33,9 +35,6 @@ class SmallNeuralNet:
 
         self.train_dataset = tf.data.Dataset.from_tensor_slices((train_x, train_y)).batch(32)
 
-        # for temp_x, temp_y in self.train_dataset.take(1):
-        #     print("Input:", temp_x.shape)
-        #     print("Target:", temp_y.shape)
         return train_x.shape[1]
 
     @staticmethod
@@ -53,8 +52,15 @@ class SmallNeuralNet:
         return model
 
     def train_model(self):
-        self.model.fit(self.train_dataset, epochs=self.training_epoch)
+        self.history = self.model.fit(self.train_dataset, epochs=self.training_epoch)
         self.model.save(root + f'saved_models/neural_net_{self.id}.h5')
+
+    def save_plot(self):
+        if self.history is not None:
+            plt.plot(self.history.history['loss'], label='train_loss')
+            plt.legend()
+            plt.savefig(root + f"results/Jung/small_neural_net/{self.id}.jpeg")
+            plt.close()
 
 
 if __name__ == '__main__':
@@ -77,4 +83,6 @@ if __name__ == '__main__':
     dataset[temp_y_columns] = temp_y_scaler.fit_transform(temp_train_y)
 
     temp_model = SmallNeuralNet(dataset, temp_x_scaler, temp_y_scaler)
-    a = temp_model.model.fit(temp_model.train_dataset, epochs=temp_model.training_epoch)
+    temp_model.training_epoch = 20
+    temp_model.train_model()
+    temp_model.save_plot()

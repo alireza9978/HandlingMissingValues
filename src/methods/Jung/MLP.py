@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 from joblib import dump
@@ -13,6 +14,7 @@ class MultiLayerPerceptron:
 
     def __init__(self, temp_df: pd.DataFrame, user_id):
         self.user_id = user_id
+        self.history = []
         self.small_neural_net_count = 20
         self.training_epoch = 50
         self.x_scaler = MultiLayerPerceptron._generate_scaler()
@@ -56,20 +58,21 @@ class MultiLayerPerceptron:
         inputs = layers.Input(shape=(input_shape,))
         output = layers.Dense(1, activation="softmax")(inputs)
         model = keras.Model(inputs, output)
-        model.compile("adam", "mean_square_error")
+        model.compile("adam", "mean_squared_error")
         return model
 
     def train_model(self):
-        maximum_loss = 0.6
-        maximum_iteration = 10
+        maximum_loss = 0.001
+        maximum_iteration = 20
         current_iteration = 1
         while True:
             for small_model in self.small_neural_nets:
                 small_model.train_model()
 
-            self.model.fit(self.train_dataset, epochs=self.training_epoch)
+            history = self.model.fit(self.train_dataset, epochs=self.training_epoch)
+            self.history.append(history)
             self.model.save(root + f'saved_models/neural_net_{self.user_id}.h5')
-            temp_loss = 1
+            temp_loss = history.history['loss'][-1]
 
             if temp_loss < maximum_loss:
                 print("converged")
@@ -77,10 +80,22 @@ class MultiLayerPerceptron:
             if current_iteration >= maximum_iteration:
                 print("did not converge")
                 break
+            current_iteration += 1
+
+    def save_plot(self):
+        if self.history is not None:
+            loss = []
+            for h in self.history:
+                loss += h.history['loss']
+            plt.plot(loss, label='train_loss')
+            plt.legend()
+            plt.savefig(root + f"results/Jung/multi_layer_perceptron/{self.user_id}.jpeg")
 
 
 if __name__ == '__main__':
     x, x_nan = get_dataset_fully_modified_date()
     x = x[x.id == 45]
     x_nan = x_nan[x_nan.id == 45]
-    temp = MultiLayerPerceptron(x_nan, 45)
+    temp_model = MultiLayerPerceptron(x_nan, 45)
+    temp_model.train_model()
+    # temp_model.save_plot()
