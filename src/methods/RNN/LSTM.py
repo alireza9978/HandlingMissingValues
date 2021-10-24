@@ -8,7 +8,7 @@ from keras.models import Sequential
 from sklearn.preprocessing import MinMaxScaler
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
-from src.preprocessing.load_dataset import get_dataset_with_modified_date
+from src.preprocessing.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
 
 
@@ -96,8 +96,12 @@ if __name__ == '__main__':
     # address = 'h:/Projects/Datasets/Smart/with_nan/smart_star_small_date_modified_0.05.csv'
     # address = 'E:/HandlingMissingValues/datasets/with_nan/smart_star_small_date_modified_0.01.csv'
     # df = read_data(address)
-    x, x_nan = get_dataset_with_modified_date()
-    x_nan.drop(columns=['year', 'winter', 'spring', 'summer', 'fall'], inplace=True)
+    x, x_nan = get_dataset_fully_modified_date("0.05")
+    x_nan.drop(columns=['year', 'winter', 'spring', 'summer', 'fall','holiday', 'weekend', 'temperature', 'humidity',
+       'visibility', 'apparentTemperature', 'pressure', 'windSpeed',
+       'cloudCover', 'windBearing', 'precipIntensity', 'dewPoint',
+       'precipProbability'], inplace=True)
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
+    # filled_users = x_nan.groupby("id").apply(fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))

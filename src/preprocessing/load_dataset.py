@@ -3,13 +3,13 @@ import pandas as pd
 from pathlib import Path
 from src.preprocessing.convert_timestamps import convert_date
 
-# root = "E:/HandlingMissingValues/"
-root = "/home/alireza/projects/python/HandlingMissingValues/"
+root = "E:/HandlingMissingValues/"
+# root = "/home/alireza/projects/python/HandlingMissingValues/"
 # root = 'h:/Projects/Datasets/Smart/'
 
 
-def get_dataset():
-    main_df_with_nan = pd.read_csv(Path(root + "datasets/with_nan/smart_star_hourly_0.01.csv"))
+def get_dataset(nan_percent: str):
+    main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_{nan_percent}.csv"))
     main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
 
     main_df.date = pd.to_datetime(main_df.date)
@@ -17,8 +17,9 @@ def get_dataset():
     return main_df, main_df_with_nan
 
 
-def get_complete_dataset():
-    modified_main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_hourly_fully_modified_0.01.csv")
+def get_complete_dataset(nan_percent: str):
+    modified_main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/"
+                                                        f"smart_star_hourly_fully_modified_{nan_percent}.csv"))
     main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
 
     main_df.date = pd.to_datetime(main_df.date)
@@ -27,20 +28,20 @@ def get_complete_dataset():
 
 
 def get_dataset_irish():
-    main_df = pd.read_csv("/mnt/79e06c5d-876b-45fd-a066-c9aac1a1c932/Dataset/Power Distribution/irish.csv")
+    main_df = pd.read_csv(Path("/mnt/79e06c5d-876b-45fd-a066-c9aac1a1c932/Dataset/Power Distribution/irish.csv"))
     main_df.date = pd.to_datetime(main_df.date)
     return main_df
 
 
-def get_dataset_fully_modified_date():
-    main_df_with_nan = pd.read_csv(root + "datasets/with_nan/smart_star_hourly_fully_modified_0.01.csv")
-    main_df = pd.read_csv(root + "datasets/smart_star_hourly_fully_modified.csv")
+def get_dataset_fully_modified_date(nan_percent: str):
+    main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_fully_modified_{nan_percent}.csv"))
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly_fully_modified.csv"))
 
     return main_df, main_df_with_nan
 
 
 def generate_small_pandas_dataset():
-    main_df = pd.read_csv(root + "datasets/smart_star_hourly.csv")
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
     main_df.date = pd.to_datetime(main_df.date)
     users_id = main_df.id.unique()
     random_ids = np.random.choice(users_id, int(len(users_id) * 0.3))
@@ -50,7 +51,7 @@ def generate_small_pandas_dataset():
 
 
 def load_weather_dataset():
-    weather_df = pd.read_csv(root + "datasets/smart_star_weather.csv")
+    weather_df = pd.read_csv(Path(root + "datasets/smart_star_weather.csv"))
     weather_df.date = pd.to_datetime(weather_df.date)
     weather_df = weather_df.drop(columns=["icon", "summary", "time"])
     weather_df = weather_df.set_index("date").resample("1H").mean().reset_index()
@@ -58,9 +59,9 @@ def load_weather_dataset():
 
 
 def add_holiday_weather_convert_date():
-    main_df = pd.read_csv(root + "datasets/smart_star_hourly.csv")
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
     main_df.date = pd.to_datetime(main_df.date)
-    holiday_df = pd.read_csv(root + "datasets/holiday.csv")
+    holiday_df = pd.read_csv(Path(root + "datasets/holiday.csv"))
     holiday_df["date"] = pd.to_datetime(holiday_df.date)
     holiday_df = holiday_df.set_index("date")
     main_df["only_date"] = pd.to_datetime(main_df.date.dt.date)
@@ -75,7 +76,7 @@ def add_holiday_weather_convert_date():
     main_df = main_df.reset_index(drop=True)
     main_df = convert_date(main_df)
 
-    main_df.to_csv(root + "datasets/smart_star_hourly_fully_modified.csv", index=False)
+    main_df.to_csv(Path(root + "datasets/smart_star_hourly_fully_modified.csv"), index=False)
 
 
 if __name__ == '__main__':

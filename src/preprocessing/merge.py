@@ -1,6 +1,7 @@
 import datetime
 import os
 from tempfile import tempdir
+from pathlib import Path
 
 import pandas as pd
 from src.preprocessing.load_dataset import root
@@ -34,7 +35,7 @@ def merge_weather():
     for year in years:
         file_name = "apartment{}.csv".format(year)
         item_path = root_path + file_name
-        temp_df = pd.read_csv(item_path)
+        temp_df = pd.read_csv(Path(item_path))
         temp_df["date"] = temp_df["time"].apply(lambda x: datetime.datetime.fromtimestamp(x))
         temp_df.date = temp_df.date - pd.to_timedelta(30, unit="minute")
         temp_df["date"] = pd.to_datetime(temp_df.date)
@@ -42,6 +43,7 @@ def merge_weather():
         main_df.loc[temp_df.index, temp_df.columns] = temp_df
         main_df = main_df.reindex(columns=main_df.columns.union(temp_df.columns))
 
+    main_df = main_df.ffill()
     main_df = main_df.reset_index()
     main_df.to_csv(root + "datasets/smart_star_weather.csv", index=False)
 
@@ -63,4 +65,4 @@ def merge_usage_london():
 
 
 if __name__ == '__main__':
-    merge_usage_london()
+    merge_weather()
