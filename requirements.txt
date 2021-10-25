@@ -10,3 +10,4 @@ keras~=2.6.0
 tensorflow~=2.6.0
 scipy~=1.7.1
 tqdm~=4.62.3
+statsmodels~=0.13.0
