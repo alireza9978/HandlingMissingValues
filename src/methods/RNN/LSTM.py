@@ -93,6 +93,7 @@ def fill_nan(main_user):
 
 
 if __name__ == '__main__':
+    # print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
     # address = 'h:/Projects/Datasets/Smart/with_nan/smart_star_small_date_modified_0.05.csv'
     # address = 'E:/HandlingMissingValues/datasets/with_nan/smart_star_small_date_modified_0.01.csv'
     # df = read_data(address)

@@ -5,6 +5,7 @@ import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.python.data.ops.dataset_ops import DatasetV2
 
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
 
@@ -12,11 +13,11 @@ from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
 class SmallNeuralNet:
     id = 1
 
-    def __init__(self, temp_df: pd.DataFrame, x_scaler, y_scaler):
+    def __init__(self, temp_df: pd.DataFrame, x_scaler, y_scaler, training_epochs):
         self.id = SmallNeuralNet.id
         SmallNeuralNet.id += 1
         self.history = None
-        self.training_epoch = 50
+        self.training_epochs = training_epochs
         self.x_scaler = x_scaler
         self.y_scaler = y_scaler
         self.input_shape = self._preprocess_data_set(temp_df)
@@ -52,7 +53,7 @@ class SmallNeuralNet:
         return model
 
     def train_model(self):
-        self.history = self.model.fit(self.train_dataset, epochs=self.training_epoch)
+        self.history = self.model.fit(self.train_dataset, epochs=self.training_epochs)
         self.model.save(root + f'saved_models/neural_net_{self.id}.h5')
 
     def save_plot(self):
@@ -61,6 +62,12 @@ class SmallNeuralNet:
             plt.legend()
             plt.savefig(root + f"results/Jung/small_neural_net/{self.id}.jpeg")
             plt.close()
+
+    def predict(self, test_x: np.array):
+        if test_x.shape[1] == self.input_shape:
+            return self.model.predict(test_x)
+        print("bad input")
+        return None
 
 
 if __name__ == '__main__':
@@ -83,6 +90,6 @@ if __name__ == '__main__':
     dataset[temp_y_columns] = temp_y_scaler.fit_transform(temp_train_y)
 
     temp_model = SmallNeuralNet(dataset, temp_x_scaler, temp_y_scaler)
-    temp_model.training_epoch = 20
+    temp_model.training_epochs = 20
     temp_model.train_model()
     temp_model.save_plot()
