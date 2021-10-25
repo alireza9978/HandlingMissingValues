@@ -10,7 +10,7 @@ nan_percents_str = ["0.01", "0.05", "0.1", "0.15", "0.2",
                     "0.25", "0.3", "0.35", "0.4", "0.45", "0.5"]
 
 if __name__ == '__main__':
-    file_name = "smart_star_hourly"
+    file_name = "smart_star_hourly_fully_modified"
     main_df = pd.read_csv(Path(root + "datasets/{}.csv".format(file_name)))
 
     for percent in nan_percents:

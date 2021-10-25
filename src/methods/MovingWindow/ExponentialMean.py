@@ -8,6 +8,13 @@ window_size = None
 
 
 def fill_nan(temp_df: pd.DataFrame):
+    global window_size
+    if window_size is None:
+        return None
+
+    if window_size > 126:
+        window_size = 126
+
     import swifter
     _ = swifter.config
     temp_df = temp_df.reset_index(drop=True)
@@ -15,8 +22,10 @@ def fill_nan(temp_df: pd.DataFrame):
     final_temp_nan_index = np.where(np.isnan(temp_array))[0]
     half_window_size = int(window_size / 2)
     temp_array = np.pad(temp_array.squeeze(), half_window_size, mode="constant", constant_values=np.nan).reshape(-1, 1)
-    weights = np.divide(np.ones(window_size), np.power(np.full(window_size, 2), np.concatenate(
-        [np.arange(half_window_size, 0, -1), np.arange(1, half_window_size + 1)])))
+    bottom = np.power(np.full(window_size, 2, dtype=np.uint64), np.concatenate(
+        [np.arange(half_window_size, 0, -1, dtype=np.uint64),
+         np.arange(1, half_window_size + 1, dtype=np.uint64)]), dtype=np.uint64)
+    weights = np.divide(np.ones(bottom.shape[0], dtype=np.uint64), bottom)
 
     def inner_window_filler(nan_row):
         row_index = nan_row["row_index"] + half_window_size
@@ -37,9 +46,9 @@ def fill_nan(temp_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset()
+    x, x_nan = get_dataset("0.01")
     # window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
-    window_sizes = [24]
+    window_sizes = [168, 720]
     for i in range(len(window_sizes)):
         window_size = window_sizes[i]
         # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
