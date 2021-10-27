@@ -39,6 +39,7 @@ def evaluate_dataframe(temp_df: pd.DataFrame, evaluation_function):
         return evaluation_function(real_values, filled_value)
 
     users_error = temp_df.swifter.progress_bar(False).apply(inner_process, axis=1)
+    # users_error = temp_df.apply(inner_process, axis=1)
     return users_error.mean()
 
 

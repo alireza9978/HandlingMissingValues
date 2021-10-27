@@ -32,6 +32,7 @@ def fill_nan(temp_df: pd.DataFrame):
 if __name__ == '__main__':
     x, x_nan = get_dataset()
     window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
+    # window_sizes = [4, 6, 8, 10, 12, 24, 48]
     for window_size in window_sizes:
         filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
         filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])

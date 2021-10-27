@@ -8,8 +8,10 @@ from scipy.optimize import differential_evolution
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
 
+from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.methods.Jung.SmallNeuralNet import SmallNeuralNet
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
+from src.utils.parallelizem import apply_parallel
 
 
 class MultiLayerPerceptron:
@@ -143,10 +145,18 @@ class MultiLayerPerceptron:
             plt.savefig(root + f"results/Jung/multi_layer_perceptron/{self.user_id}.jpeg")
 
 
-if __name__ == '__main__':
-    x, x_nan = get_dataset_fully_modified_date()
-    x = x[x.id == 45]
-    x_nan = x_nan[x_nan.id == 45]
-    temp_model = MultiLayerPerceptron(x_nan, 45, 5, 5, 5)
+def fill_nan(temp_df: pd.DataFrame):
+    user_id = temp_df["id"].values[0]
+    temp_model = MultiLayerPerceptron(temp_df, user_id, 10, 20, 10)
     temp_model.train_model()
     temp_model.save_plot()
+
+
+if __name__ == '__main__':
+    x, x_nan = get_dataset_fully_modified_date("0.05")
+    x = x[x.id == 45]
+    x_nan = x_nan[x_nan.id == 45]
+    filled_users = x_nan.groupby("id").apply(fill_nan)
+    # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
+    filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+    print(evaluate_dataframe(filled_users, mean_square_error))
