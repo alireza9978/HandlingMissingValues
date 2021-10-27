@@ -13,11 +13,11 @@ def fill_nan(user_data: pd.DataFrame):
     # getting the nan indexes
     nan_row = user[user["usage"].isna()]
     nan_index = nan_row.index.to_numpy()
-    non_nan_rows = user.drop(user[nan_index])
-    model = SVR(C=1.0, epsilon=0.1, kernel='poly', gamma='scale', degree=3)
+    non_nan_rows = user.drop(index=nan_index)
+    model = SVR(C=1000.0, epsilon=0.15, kernel='poly', gamma='scale', degree=5)
     model.fit(non_nan_rows.drop(columns=['usage']), non_nan_rows['usage'])
-    usage = model.predict(nan_row.drop(columns=['usage']))
-    return pd.Series(usage, nan_index)
+    usage = model.predict(nan_row.drop(columns=['usage'])).reshape(-1,1)
+    return pd.Series([usage, nan_index])
 
 
 if __name__ == '__main__':

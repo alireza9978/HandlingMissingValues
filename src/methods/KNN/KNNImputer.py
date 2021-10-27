@@ -19,7 +19,7 @@ def fill_nan(user: pd.DataFrame):
     nan_row = user[user["usage"].isna()]
     nan_index = nan_row.index.to_numpy()
     # define imputer
-    imputer = KNNImputer(n_neighbors=10, weights='uniform', metric='nan_euclidean')
+    imputer = KNNImputer(n_neighbors=14, weights='distance', metric='nan_euclidean')
     # fit on the dataset
     user['usage'] = imputer.fit_transform(user)[:,1] # change 1 to the number of column containing missing values
     filled_nans = user['usage'][nan_index].to_numpy().reshape(-1, 1)
