@@ -18,8 +18,8 @@ def apply_parallel(data_frame_grouped, func):
 
 
 def fill_nan(temp_df: pd.DataFrame):
-    temp_df = temp_df.reset_index(drop=True)
     temp_nan_index = np.where(np.isnan(temp_df))[0]
+    temp_df = temp_df.reset_index(drop=True)
     temp_df["only_date"] = temp_df.date.dt.date
     nan_date = temp_df.loc[temp_nan_index]["only_date"].unique()
     nan_df = temp_df[temp_df.only_date.isin(nan_date)]
@@ -52,7 +52,7 @@ def fill_nan(temp_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    x, x_nan = get_complete_dataset()
+    x, x_nan = get_complete_dataset("0.05")
     # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     filled_users = x_nan.groupby("id").apply(fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
