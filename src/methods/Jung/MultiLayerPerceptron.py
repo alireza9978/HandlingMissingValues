@@ -11,7 +11,6 @@ from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.methods.Jung.SmallNeuralNet import SmallNeuralNet
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
 
-
 class MultiLayerPerceptron:
 
     def __init__(self, temp_df: pd.DataFrame, user_id, small_neural_net_count,
@@ -33,8 +32,7 @@ class MultiLayerPerceptron:
         return MinMaxScaler()
 
     def _preprocess_data_set(self, temp_df: pd.DataFrame):
-        temp_array = temp_df.usage.to_numpy().reshape(-1, 1)
-        self.nan_indexes = np.where(np.isnan(temp_array))[0]
+        self.nan_indexes = temp_df.index[temp_df.usage.isna()].to_numpy()
         temp_nan_df = temp_df[temp_df.usage.isna()]
         temp_df = temp_df[~temp_df.usage.isna()]
         y_columns = ["usage"]
@@ -94,13 +92,18 @@ class MultiLayerPerceptron:
         return y_hats
 
     @staticmethod
-    def evaluate_ensemble(y_hat, weights, train_y_dataset):
+    def apply_weights(y_hat, weights):
         y_hat = (y_hat * weights).mean(axis=1).reshape(-1, 1)
+        return y_hat
+
+    @staticmethod
+    def static_evaluate_ensemble(y_hat, weights, train_y_dataset):
+        y_hat = MultiLayerPerceptron.apply_weights(y_hat, weights)
         return mean_squared_error(train_y_dataset, y_hat)
 
     # # evaluate a specific number of members in an ensemble
     def evaluate_ensemble(self, weights):
-        return MultiLayerPerceptron.evaluate_ensemble(self.small_set_predictions, weights, self.train_y_dataset)
+        return MultiLayerPerceptron.static_evaluate_ensemble(self.small_set_predictions, weights, self.train_y_dataset)
 
     # loss function for optimization process, designed to be minimized
     @staticmethod
@@ -130,7 +133,17 @@ class MultiLayerPerceptron:
             weights = MultiLayerPerceptron.normalize(result['x'])
             temp_loss = result['fun']
 
+            if current_iteration >= maximum_iteration:
+                self.weights = weights
+                print("did not converge")
+                break
             bad_small_neural_nets_count = (weights < good_small_neural_net_threshold).sum()
+            if bad_small_neural_nets_count == 0:
+                if temp_loss < maximum_loss:
+                    self.weights = weights
+                    print("converged")
+                    break
+
             for i in sorted(np.where(weights < good_small_neural_net_threshold)[0].tolist(), reverse=True):
                 self.small_neural_nets.remove(self.small_neural_nets[i])
             for i in range(bad_small_neural_nets_count):
@@ -139,14 +152,6 @@ class MultiLayerPerceptron:
                 new_model.train_model()
                 self.small_neural_nets.append(new_model)
 
-            if bad_small_neural_nets_count == 0:
-                if temp_loss < maximum_loss:
-                    self.weights = weights
-                    print("converged")
-                    break
-            if current_iteration >= maximum_iteration:
-                print("did not converge")
-                break
             print(current_iteration)
             current_iteration += 1
 
@@ -161,7 +166,7 @@ class MultiLayerPerceptron:
             print("First, train the model")
             return None
         y_pred = MultiLayerPerceptron.static_ensemble_predictions(self.test_dataset, self.small_neural_nets)
-        MultiLayerPerceptron.loss_function_two(self)
+        y_pred = MultiLayerPerceptron.apply_weights(y_pred, self.weights)
         return self.y_scaler.inverse_transform(y_pred)
 
 
