@@ -17,9 +17,9 @@ def fill_nan(temp_df: pd.DataFrame):
 
     import swifter
     _ = swifter.config
-    temp_df = temp_df.reset_index(drop=True)
     temp_array = temp_df.usage.to_numpy().reshape(-1, 1)
-    final_temp_nan_index = np.where(np.isnan(temp_array))[0]
+    final_temp_nan_index = temp_df.index[temp_df.usage.isna()].to_numpy()
+    temp_df = temp_df.reset_index(drop=True)
     half_window_size = int(window_size / 2)
     temp_array = np.pad(temp_array.squeeze(), half_window_size, mode="constant", constant_values=np.nan).reshape(-1, 1)
     bottom = np.power(np.full(window_size, 2, dtype=np.uint64), np.concatenate(
@@ -47,8 +47,8 @@ def fill_nan(temp_df: pd.DataFrame):
 
 if __name__ == '__main__':
     x, x_nan = get_dataset("0.01")
-    # window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
-    window_sizes = [168, 720]
+    window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
+    # window_sizes = [168, 720]
     for i in range(len(window_sizes)):
         window_size = window_sizes[i]
         # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)

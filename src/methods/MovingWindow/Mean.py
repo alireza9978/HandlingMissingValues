@@ -11,7 +11,8 @@ window_size = None
 def fill_nan(temp_df: pd.DataFrame):
     import swifter
     _ = swifter.config
-    temp_df = temp_df.reset_index(drop=True)
+    temp_nan_index = temp_df.usage.isna()
+    final_temp_nan_index = temp_df.index[temp_nan_index].to_numpy()
     temp_array = temp_df.usage.to_numpy().reshape(-1, 1)
     half_window_size = int(window_size / 2)
 
@@ -22,15 +23,13 @@ def fill_nan(temp_df: pd.DataFrame):
         return np.nanmean(usage_window).sum()
 
     temp_df["row_index"] = temp_df.index
-    temp_nan_index = temp_df.usage.isna()
     filled_nan = temp_df[temp_nan_index].swifter.progress_bar(False). \
         apply(inner_window_filler, axis=1).to_numpy().reshape(-1, 1)
-    temp_nan_index = np.where(np.isnan(temp_array))[0]
-    return pd.Series([filled_nan, temp_nan_index])
+    return pd.Series([filled_nan, final_temp_nan_index])
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset()
+    x, x_nan = get_dataset("0.01")
     window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
     # window_sizes = [4, 6, 8, 10, 12, 24, 48]
     for window_size in window_sizes:
