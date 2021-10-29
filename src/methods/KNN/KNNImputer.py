@@ -23,7 +23,7 @@ def fill_nan(user: pd.DataFrame):
     # fit on the dataset
     user['usage'] = imputer.fit_transform(user)[:,1] # change 1 to the number of column containing missing values
     filled_nans = user['usage'][nan_index].to_numpy().reshape(-1, 1)
-    return pd.Series([filled_nans,nan_index])
+    return pd.Series([filled_nans, nan_index])
 
 
 if __name__ == '__main__':

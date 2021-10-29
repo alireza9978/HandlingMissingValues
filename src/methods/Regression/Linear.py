@@ -1,19 +1,11 @@
-import multiprocessing
-
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import euclidean_distances
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date
-
-
-def apply_parallel(data_frame_grouped, func):
-    result_list = Parallel(n_jobs=multiprocessing.cpu_count())(
-        delayed(func)(group) for name, group in data_frame_grouped)
-    return pd.DataFrame(result_list)
+from src.utils.parallelizem import apply_parallel
 
 
 def fill_nan(temp_array: np.ndarray):
@@ -47,4 +39,3 @@ if __name__ == '__main__':
     # filled_users = x_nan.groupby("id").apply(fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
-
