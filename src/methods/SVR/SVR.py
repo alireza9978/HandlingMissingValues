@@ -1,11 +1,9 @@
-from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+from sklearn.svm import SVR
+
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
-from sklearn.impute import KNNImputer
-from sklearn.svm import SVR
-import pandas as pd
-import numpy as np
 
 
 def fill_nan(user_data: pd.DataFrame):

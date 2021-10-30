@@ -3,8 +3,8 @@ import pandas as pd
 from pathlib import Path
 from src.preprocessing.convert_timestamps import convert_date
 
-root = "E:/HandlingMissingValues/"
-# root = "/home/alireza/projects/python/HandlingMissingValues/"
+# root = "E:/HandlingMissingValues/"
+root = "/home/alireza/projects/python/HandlingMissingValues/"
 # root = 'h:/Projects/Datasets/Smart/'
 
 

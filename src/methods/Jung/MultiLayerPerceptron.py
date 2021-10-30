@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 from joblib import dump
 from numpy.linalg import norm
 from scipy.optimize import differential_evolution
@@ -11,8 +10,6 @@ from sklearn.preprocessing import MinMaxScaler
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.methods.Jung.SmallNeuralNet import SmallNeuralNet
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
-from src.utils.parallelizem import apply_parallel
-
 
 class MultiLayerPerceptron:
 
@@ -28,22 +25,29 @@ class MultiLayerPerceptron:
         self._preprocess_data_set(temp_df)
         self._generate_model(self.small_neural_net_count)
         self.small_set_predictions = None
+        self.weights = None
 
     @staticmethod
     def _generate_scaler():
         return MinMaxScaler()
 
     def _preprocess_data_set(self, temp_df: pd.DataFrame):
+        self.nan_indexes = temp_df.index[temp_df.usage.isna()].to_numpy()
+        temp_nan_df = temp_df[temp_df.usage.isna()]
         temp_df = temp_df[~temp_df.usage.isna()]
         y_columns = ["usage"]
         useless_columns = ["id"]
 
         train_x = temp_df.drop(columns=useless_columns + y_columns)
+        test_x = temp_nan_df.drop(columns=useless_columns + y_columns)
         temp_columns = train_x.columns
         train_x = train_x.to_numpy()
+        test_x = test_x.to_numpy()
+
         train_y = temp_df[y_columns].to_numpy()
 
         train_x = self.x_scaler.fit_transform(train_x)
+        test_x = self.x_scaler.transform(test_x)
         train_y = self.y_scaler.fit_transform(train_y)
 
         self.dataset = pd.DataFrame(train_x, columns=temp_columns)
@@ -51,7 +55,8 @@ class MultiLayerPerceptron:
 
         self.train_x_dataset = train_x
         self.train_y_dataset = train_y
-        self.train_dataset = tf.data.Dataset.from_tensor_slices((train_x, train_y)).batch(32)
+
+        self.test_dataset = test_x
 
         self._save_scaler()
 
@@ -77,19 +82,28 @@ class MultiLayerPerceptron:
         return weights / result
 
     def ensemble_predictions(self):
+        return MultiLayerPerceptron.static_ensemble_predictions(self.train_x_dataset, self.small_neural_nets)
+
+    @staticmethod
+    def static_ensemble_predictions(dataset, models):
         # make predictions
-        y_hats = [model.predict(self.train_x_dataset) for model in self.small_neural_nets]
+        y_hats = [model.predict(dataset) for model in models]
         y_hats = np.concatenate(y_hats, axis=1)
         return y_hats
 
+    @staticmethod
+    def apply_weights(y_hat, weights):
+        y_hat = (y_hat * weights).mean(axis=1).reshape(-1, 1)
+        return y_hat
+
+    @staticmethod
+    def static_evaluate_ensemble(y_hat, weights, train_y_dataset):
+        y_hat = MultiLayerPerceptron.apply_weights(y_hat, weights)
+        return mean_squared_error(train_y_dataset, y_hat)
+
     # # evaluate a specific number of members in an ensemble
     def evaluate_ensemble(self, weights):
-        # make prediction
-        y_hat = self.small_set_predictions
-        # calculate loss
-        y_hat = (y_hat * weights).mean(axis=1).reshape(-1, 1)
-
-        return mean_squared_error(self.train_y_dataset, y_hat)
+        return MultiLayerPerceptron.static_evaluate_ensemble(self.small_set_predictions, weights, self.train_y_dataset)
 
     # loss function for optimization process, designed to be minimized
     @staticmethod
@@ -97,7 +111,7 @@ class MultiLayerPerceptron:
         # normalize weights
         normalized = MultiLayerPerceptron.normalize(weights)
         # calculate error rate
-        loss = MultiLayerPerceptron.evaluate_ensemble(self, normalized)
+        loss = self.evaluate_ensemble(normalized)
         self.history.append(loss)
         return loss
 
@@ -119,7 +133,17 @@ class MultiLayerPerceptron:
             weights = MultiLayerPerceptron.normalize(result['x'])
             temp_loss = result['fun']
 
+            if current_iteration >= maximum_iteration:
+                self.weights = weights
+                print("did not converge")
+                break
             bad_small_neural_nets_count = (weights < good_small_neural_net_threshold).sum()
+            if bad_small_neural_nets_count == 0:
+                if temp_loss < maximum_loss:
+                    self.weights = weights
+                    print("converged")
+                    break
+
             for i in sorted(np.where(weights < good_small_neural_net_threshold)[0].tolist(), reverse=True):
                 self.small_neural_nets.remove(self.small_neural_nets[i])
             for i in range(bad_small_neural_nets_count):
@@ -128,13 +152,6 @@ class MultiLayerPerceptron:
                 new_model.train_model()
                 self.small_neural_nets.append(new_model)
 
-            if bad_small_neural_nets_count == 0:
-                if temp_loss < maximum_loss:
-                    print("converged")
-                    break
-            if current_iteration >= maximum_iteration:
-                print("did not converge")
-                break
             print(current_iteration)
             current_iteration += 1
 
@@ -144,12 +161,21 @@ class MultiLayerPerceptron:
             plt.legend()
             plt.savefig(root + f"results/Jung/multi_layer_perceptron/{self.user_id}.jpeg")
 
+    def predict_nan(self):
+        if self.weights is None:
+            print("First, train the model")
+            return None
+        y_pred = MultiLayerPerceptron.static_ensemble_predictions(self.test_dataset, self.small_neural_nets)
+        y_pred = MultiLayerPerceptron.apply_weights(y_pred, self.weights)
+        return self.y_scaler.inverse_transform(y_pred)
+
 
 def fill_nan(temp_df: pd.DataFrame):
     user_id = temp_df["id"].values[0]
     temp_model = MultiLayerPerceptron(temp_df, user_id, 10, 20, 10)
     temp_model.train_model()
     temp_model.save_plot()
+    return pd.Series([temp_model.predict_nan(), temp_model.nan_indexes])
 
 
 if __name__ == '__main__':

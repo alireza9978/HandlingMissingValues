@@ -16,8 +16,8 @@ def read_data(address):
     return pd.read_csv(Path(address))
 
 
-def select_user_data(df, id):
-    return df.loc[df.id == id].copy()
+def select_user_data(df, temp_id):
+    return df.loc[df.id == temp_id].copy()
 
 
 def normalize_user_usage(user):
@@ -29,7 +29,6 @@ def normalize_user_usage(user):
 def preimputation(user: pd.DataFrame):
     nan_row = user[user["usage"].isna()]
     nan_index = nan_row.index.to_numpy()
-    complete_row = user[~user["usage"].isna()]
     # Could do this for a percentage of data
     user['usage'] = user['usage'].interpolate().ffill().bfill()
     return user, nan_index
@@ -57,9 +56,7 @@ def training(train, consumptions, look_back):
     model.add(Dropout(0.2))
     model.add(Dense(1, activation="sigmoid"))
     model.compile(loss='mean_squared_error', optimizer='adadelta')
-    model.fit(train, consumptions, epochs=150
-              , batch_size=batch_size, verbose=2, shuffle=False)
-
+    model.fit(train, consumptions, epochs=150, batch_size=batch_size, verbose=2, shuffle=False)
     return model
 
 
@@ -79,9 +76,9 @@ def fill_nan(main_user):
     user_preimputed, nan_index = preimputation(user)
     user, scaler = normalize_user_usage(user)
     look_back = 12
-    x, consumptions = create_dataset(user_preimputed, look_back)
-    model = training(x, consumptions, look_back)
-    prediction, extra = testing(model, user_preimputed, nan_index, x, look_back)
+    temp_x, consumptions = create_dataset(user_preimputed, look_back)
+    model = training(temp_x, consumptions, look_back)
+    prediction, extra = testing(model, user_preimputed, nan_index, temp_x, look_back)
     prediction = np.reshape(prediction, (prediction.shape[0]))
     extra = np.array(extra)
     extra = np.reshape(extra, (extra.shape[0]))
@@ -98,10 +95,10 @@ if __name__ == '__main__':
     # address = 'E:/HandlingMissingValues/datasets/with_nan/smart_star_small_date_modified_0.01.csv'
     # df = read_data(address)
     x, x_nan = get_dataset_fully_modified_date("0.05")
-    x_nan.drop(columns=['year', 'winter', 'spring', 'summer', 'fall','holiday', 'weekend', 'temperature', 'humidity',
-       'visibility', 'apparentTemperature', 'pressure', 'windSpeed',
-       'cloudCover', 'windBearing', 'precipIntensity', 'dewPoint',
-       'precipProbability'], inplace=True)
+    x_nan.drop(columns=['year', 'winter', 'spring', 'summer', 'fall', 'holiday', 'weekend', 'temperature', 'humidity',
+                        'visibility', 'apparentTemperature', 'pressure', 'windSpeed',
+                        'cloudCover', 'windBearing', 'precipIntensity', 'dewPoint',
+                        'precipProbability'], inplace=True)
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     # filled_users = x_nan.groupby("id").apply(fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])

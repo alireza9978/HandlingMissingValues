@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 
@@ -7,7 +6,7 @@ from src.preprocessing.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
 
 
-def fill_nan(temp_array: np.ndarray):
+def fill_nan(temp_array: pd.DataFrame):
     nan_row = temp_array[temp_array["usage"].isna()]
     temp_nan_index = nan_row.index.to_numpy()
     complete_row = temp_array[~temp_array["usage"].isna()]
@@ -27,7 +26,7 @@ def fill_nan(temp_array: np.ndarray):
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset_fully_modified_date()
+    x, x_nan = get_dataset_fully_modified_date("0.01")
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
