@@ -40,13 +40,13 @@ method_name_single_feature_window = [
 
 methods_multiple_feature = [importlib.import_module("Regression.Linear"),
                             importlib.import_module("Hot Deck.Hot Deck"),
-                            importlib.import_module("Jung.MultiLayerPerceptron"),
+                            # importlib.import_module("Jung.MultiLayerPerceptron"),
                             importlib.import_module("KNN.KNNImputer"),
                             importlib.import_module("SVR.SVR")]
 
 method_name_multiple_feature = ["Linear Regression",
                                 "Hot Deck",
-                                "Multi Layer Perceptron",
+                                # "Multi Layer Perceptron",
                                 "KNN Imputer",
                                 "SVR"]
 
@@ -54,7 +54,7 @@ methods_complete_feature = [importlib.import_module("Regression.EveryDayLinear")
 
 method_name_complete_feature = ["Regression Every Day", ]
 
-for nan_percent in nan_percents_str:
+for nan_percent in nan_percents_str[0:1]:
     result_df = pd.DataFrame()
     x, x_nan = get_dataset(nan_percent)
     for i in range(len(method_name_single_feature)):
@@ -71,8 +71,7 @@ for nan_percent in nan_percents_str:
         window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
         for window_index in range(len(window_sizes)):
             window_size = window_sizes[window_index]
-            method_single_feature_window[i].window_size = window_size
-            filled_users = apply_parallel(x_nan.groupby("id"), method_single_feature_window[i].fill_nan)
+            filled_users = apply_parallel(x_nan.groupby("id"), method_single_feature_window[i].fill_nan, window_size)
             filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
             temp_result_list = ["{}_window_{}".format(method_name_single_feature_window[i], window_size), nan_percent]
             for measure in measures:
@@ -94,7 +93,7 @@ for nan_percent in nan_percents_str:
 
     x, x_nan = get_complete_dataset(nan_percent)
     for i in range(len(methods_complete_feature)):
-        filled_users = x_nan.groupby("id").apply(methods_complete_feature[i].fill_nan)
+        filled_users = apply_parallel(x_nan.groupby("id"), methods_complete_feature[i].fill_nan)
         filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
         temp_result_list = [method_name_complete_feature[i]]
         for measure in measures:

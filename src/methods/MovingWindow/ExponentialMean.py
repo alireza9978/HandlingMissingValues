@@ -4,11 +4,9 @@ import pandas as pd
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_dataset
 
-window_size = None
 
 
-def fill_nan(temp_df: pd.DataFrame):
-    global window_size
+def fill_nan(temp_df: pd.DataFrame, window_size):
     if window_size is None:
         return None
 
@@ -50,10 +48,10 @@ if __name__ == '__main__':
     window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
     # window_sizes = [168, 720]
     for i in range(len(window_sizes)):
-        window_size = window_sizes[i]
+        temp_window_size = window_sizes[i]
         # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
-        filled_users = x_nan.groupby("id").apply(fill_nan)
+        filled_users = x_nan.groupby("id").apply(fill_nan, temp_window_size)
         filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-        print("window size = ", window_size)
+        print("window size = ", temp_window_size)
         print(evaluate_dataframe(filled_users, mean_square_error))
         print()
