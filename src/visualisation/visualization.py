@@ -1,33 +1,114 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+
+from src.preprocessing.insert_nan import nan_percents, nan_percents_str
+from src.preprocessing.load_dataset import root
+from src.utils.parallelizem import apply_parallel
+
+method_name_single_feature_window = [
+    "Moving Window Mean",
+    "Moving Window Weighted Mean",
+    "Moving Window Exponential Mean",
+]
 
 
 def plot_result(temp_df: pd.DataFrame):
-    labels = temp_df.name
+    x_axis_count = len(temp_df["Nan Percent"].unique())
+    x = np.arange(x_axis_count)  # the label locations
+    plt.figure(figsize=(10, 5))
 
-    x = np.arange(len(labels))  # the label locations
-    width = 0.1  # the width of the bars
+    def plot_single_method(inner_df: pd.DataFrame):
+        a = inner_df["Nan Percent"].to_list()
+        for b in nan_percents:
+            if not a.__contains__(b):
+                temp_row = inner_df.iloc[0]
+                temp_row["Nan Percent"] = 0.5
+                temp_row["Mean Square Error"] = np.nan
+                temp_row["Mean Absolute Error"] = np.nan
+                temp_row["Mean Absolute Percentage Error"] = np.nan
+                inner_df = inner_df.append(temp_row)
 
-    fig, ax = plt.subplots()
-    list_reacts = []
-    for i, col in enumerate(temp_df.drop(columns=["Method"]).columns):
-        model = MinMaxScaler()
-        y = model.fit_transform(temp_df[col].to_numpy().reshape(-1, 1)).squeeze()
-        list_reacts.append(ax.bar(x + (i * width), y, width, label=col))
+        y = inner_df.sort_values("Nan Percent")["Mean Square Error"].to_numpy()
+        label = inner_df["Method"].values[0]
+        y[y > 2] = np.nan
+        mask = ~np.isnan(y)
+        temp_x = x[mask]
+        temp_y = y[mask]
+        plt.plot(temp_x, temp_y, label=label, )
 
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('value')
-    ax.set_title('measurements')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels)
-    ax.legend()
+    temp_df.groupby("Method").apply(plot_single_method)
 
-    for react in list_reacts:
-        ax.bar_label(react, padding=3)
-
-    mngr = plt.get_current_fig_manager()
-    mngr.window.setGeometry(50, 50, 960, 640)
+    plt.ylabel("Mean Squared Error")
+    plt.xlabel("Nan Percent")
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.xticks(x, nan_percents_str)
     plt.tight_layout()
     plt.show()
+
+
+def load_results():
+    root_path = root + "results/models/"
+    merged_df = pd.DataFrame()
+    for item in os.listdir(root_path):
+        if item.endswith(".csv"):
+            item_path = root_path + item
+            temp_read_df = pd.read_csv(item_path)
+            merged_df = merged_df.append(temp_read_df)
+
+    merged_df = merged_df.dropna()
+    return merged_df
+
+
+def merge_windows(temp_df: pd.DataFrame):
+    def inner_selection(inner_df: pd.DataFrame):
+        temp_value = inner_df.iloc[np.argmin(inner_df["Mean Square Error"])]
+        return temp_value
+
+    for name in method_name_single_feature_window:
+        temp_df["temp_col"] = temp_df["Method"].apply(lambda x: x.startswith(name))
+        selected_df = apply_parallel(temp_df[temp_df["temp_col"]].groupby("Nan Percent"), inner_selection)
+        selected_df["Method"] = name
+        temp_df = temp_df[~temp_df["temp_col"]].append(selected_df)
+        temp_df = temp_df.drop(columns=["temp_col"])
+
+    return temp_df
+
+
+def plot_moving_windows(temp_df: pd.DataFrame):
+    x_axis_count = len(temp_df["Nan Percent"].unique())
+    x = np.arange(x_axis_count)  # the label locations
+    plt.figure(figsize=(10, 5))
+
+    def inner_values(inner_df: pd.DataFrame):
+        return pd.Series([inner_df["Mean Square Error"].mean(), inner_df["Mean Square Error"].std()])
+
+    for name in method_name_single_feature_window:
+        temp_df["temp_col"] = temp_df["Method"].apply(lambda temp_value: temp_value.startswith(name))
+        temp_method_df = temp_df[temp_df.temp_col]
+        result = temp_method_df.groupby(["Nan Percent"]).apply(inner_values)
+        temp_df = temp_df[~temp_df["temp_col"]]
+        temp_df = temp_df.drop(columns=["temp_col"])
+
+        temp_index = result.index.to_list()
+        for i in nan_percents:
+            if not temp_index.__contains__(i):
+                result = result.append(pd.Series([np.nan, np.nan]), ignore_index=True)
+
+        plt.errorbar(x, result[0], result[1], marker='^', label=name)
+
+    plt.ylabel("Mean Squared Error")
+    plt.xlabel("Nan Percent")
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.xticks(x, nan_percents_str)
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == '__main__':
+    df = load_results()
+    plot_moving_windows(df)
+    # df = merge_windows(df)
+    # plot_result(df)
