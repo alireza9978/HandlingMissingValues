@@ -11,26 +11,28 @@ from sklearn.decomposition import PCA
 
 
 def fill_nan(temp_df: pd.DataFrame):
-    temp_nan_index = np.where(np.isnan(temp_df))[0]
-    temp_df = temp_df.reset_index(drop=True)
+    nan_row = temp_df[temp_df["usage"].isna()]
+    temp_nan_index = nan_row.index.to_numpy()
     temp_df["only_date"] = temp_df.date.dt.date
     nan_date = temp_df.loc[temp_nan_index]["only_date"].unique()
     nan_df = temp_df[temp_df.only_date.isin(nan_date)]
 
     def fill_single_day(day_df: pd.DataFrame):
         temp_y = day_df.usage.to_numpy().reshape(-1, 1)
-        temp_x = day_df.drop(columns=["id", "usage", "date", "only_date"]).to_numpy()
+        # temp_x = day_df.drop(columns=["id", "usage", "date", "only_date"]).to_numpy()
+        # temp_x = np.array(list(range(day_df.shape[0]))).reshape(-1, 1)
+        temp_x = day_df[['day_x', 'day_y']].to_numpy()
         # todo remove some of columns to reduce computational complexity
-        pca_model = PCA()
-        new_temp_x = pca_model.fit_transform(temp_x)
+        # pca_model = PCA()
+        # new_temp_x = pca_model.fit_transform(temp_x)
 
         nan_index = np.isnan(temp_y)
         not_nan_index = ~np.isnan(temp_y)
         y_train = temp_y[not_nan_index]
-        x_train = new_temp_x[not_nan_index.squeeze()]
-        x_test = new_temp_x[nan_index.squeeze()]
+        x_train = temp_x[not_nan_index.squeeze()]
+        x_test = temp_x[nan_index.squeeze()]
 
-        degree = 15
+        degree = 8
         polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
         polynomial_reg.fit(x_train, y_train)
         pred = polynomial_reg.predict(x_test).squeeze()
@@ -48,7 +50,7 @@ def fill_nan(temp_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    x, x_nan = get_complete_dataset("0.05")
+    x, x_nan = get_complete_dataset("0.15")
     x_nan = x_nan[x_nan.id == 102]
     x = x[x.id == 102]
     # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
