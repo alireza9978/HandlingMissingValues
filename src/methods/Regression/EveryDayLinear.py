@@ -7,6 +7,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_complete_dataset
 from src.utils.parallelizem import apply_parallel
+from sklearn.decomposition import PCA
 
 
 def fill_nan(temp_df: pd.DataFrame):
@@ -20,14 +21,16 @@ def fill_nan(temp_df: pd.DataFrame):
         temp_y = day_df.usage.to_numpy().reshape(-1, 1)
         temp_x = day_df.drop(columns=["id", "usage", "date", "only_date"]).to_numpy()
         # todo remove some of columns to reduce computational complexity
+        pca_model = PCA()
+        new_temp_x = pca_model.fit_transform(temp_x)
 
         nan_index = np.isnan(temp_y)
         not_nan_index = ~np.isnan(temp_y)
         y_train = temp_y[not_nan_index]
-        x_train = temp_x[not_nan_index.squeeze()]
-        x_test = temp_x[nan_index.squeeze()]
+        x_train = new_temp_x[not_nan_index.squeeze()]
+        x_test = new_temp_x[nan_index.squeeze()]
 
-        degree = 4
+        degree = 15
         polynomial_reg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
         polynomial_reg.fit(x_train, y_train)
         pred = polynomial_reg.predict(x_test).squeeze()
@@ -46,7 +49,9 @@ def fill_nan(temp_df: pd.DataFrame):
 
 if __name__ == '__main__':
     x, x_nan = get_complete_dataset("0.05")
-    filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
-    # filled_users = x_nan.groupby("id").apply(fill_nan)
+    x_nan = x_nan[x_nan.id == 102]
+    x = x[x.id == 102]
+    # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
+    filled_users = x_nan.groupby("id").apply(fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
