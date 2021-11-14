@@ -18,7 +18,7 @@ def evaluate_clustering(temp_df: pd.DataFrame, n_clusters):
 
 if __name__ == '__main__':
     x, x_nan = get_dataset_fully_modified_date("0.01")
-    x = x[x.id.isin([63, 5, 42])]
+    # x = x[x.id.isin([63, 5, 42])]
     result = pd.DataFrame()
     result["id"] = pd.Series(x.id.unique())
     result = result.set_index("id")
