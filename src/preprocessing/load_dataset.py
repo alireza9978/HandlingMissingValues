@@ -1,10 +1,14 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
+
 from src.preprocessing.convert_timestamps import convert_date
 
 # root = "E:/HandlingMissingValues/"
 root = "/home/alireza/projects/python/HandlingMissingValues/"
+
+
 # root = 'h:/Projects/Datasets/Smart/'
 
 
@@ -31,10 +35,7 @@ def get_dataset_date_modified(nan_percent: str):
     main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_date_modified_{nan_percent}.csv"))
     main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly_date_modified.csv"))
 
-    main_df.date = pd.to_datetime(main_df.date)
-    main_df_with_nan.date = pd.to_datetime(main_df_with_nan.date)
     return main_df, main_df_with_nan
-
 
 
 def get_dataset_irish():
@@ -91,5 +92,3 @@ def add_holiday_weather_convert_date():
 
 if __name__ == '__main__':
     add_holiday_weather_convert_date()
-
-
