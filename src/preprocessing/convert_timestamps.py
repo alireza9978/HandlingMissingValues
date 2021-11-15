@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
 
@@ -27,8 +28,9 @@ def convert_date(temp_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    from load_dataset import generate_small_pandas_dataset, root
+    from load_dataset import root
 
-    main_df = generate_small_pandas_dataset()
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
+    main_df.date = pd.to_datetime(main_df.date)
     main_df = convert_date(main_df)
-    main_df.to_csv(root + "datasets/smart_star_small_date_modified.csv", index=False)
+    main_df.to_csv(root + "datasets/smart_star_hourly_date_modified.csv", index=False)

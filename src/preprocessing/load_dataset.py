@@ -27,6 +27,16 @@ def get_complete_dataset(nan_percent: str):
     return main_df, modified_main_df_with_nan
 
 
+def get_dataset_date_modified(nan_percent: str):
+    main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_date_modified_{nan_percent}.csv"))
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly_date_modified.csv"))
+
+    main_df.date = pd.to_datetime(main_df.date)
+    main_df_with_nan.date = pd.to_datetime(main_df_with_nan.date)
+    return main_df, main_df_with_nan
+
+
+
 def get_dataset_irish():
     main_df = pd.read_csv(Path("/mnt/79e06c5d-876b-45fd-a066-c9aac1a1c932/Dataset/Power Distribution/irish.csv"))
     main_df.date = pd.to_datetime(main_df.date)
@@ -81,3 +91,5 @@ def add_holiday_weather_convert_date():
 
 if __name__ == '__main__':
     add_holiday_weather_convert_date()
+
+
