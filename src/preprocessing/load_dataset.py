@@ -1,10 +1,14 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
+
 from src.preprocessing.convert_timestamps import convert_date
 
 # root = "E:/HandlingMissingValues/"
 root = "/home/alireza/projects/python/HandlingMissingValues/"
+
+
 # root = 'h:/Projects/Datasets/Smart/'
 
 
@@ -25,6 +29,13 @@ def get_complete_dataset(nan_percent: str):
     main_df.date = pd.to_datetime(main_df.date)
     modified_main_df_with_nan["date"] = main_df.date
     return main_df, modified_main_df_with_nan
+
+
+def get_dataset_date_modified(nan_percent: str):
+    main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_date_modified_{nan_percent}.csv"))
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly_date_modified.csv"))
+
+    return main_df, main_df_with_nan
 
 
 def get_dataset_irish():
