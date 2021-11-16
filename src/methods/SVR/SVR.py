@@ -21,5 +21,6 @@ def fill_nan(user_data: pd.DataFrame):
 if __name__ == '__main__':
     x, x_nan = get_dataset_fully_modified_date(nan_percent='0.05')
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
+    print("nan count = ", filled_users[0].isna().sum())
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))

@@ -20,20 +20,23 @@ def fill_nan(temp_df: pd.DataFrame, window_size):
         row_index = nan_row["row_index"]
         usage_window = np.concatenate([temp_array[row_index + 1: row_index + 1 + half_window_size],
                                        temp_array[row_index - half_window_size:row_index]])
-        return np.nanmean(usage_window).sum()
+        usage_window = usage_window[~np.isnan(usage_window)]
+        if usage_window.shape[0] > 0:
+            return np.nanmean(usage_window).sum()
+        return np.nan
 
     temp_df["row_index"] = temp_df.index
-    filled_nan = temp_df[temp_nan_index]. \
-        swifter.progress_bar(False). \
-        apply(inner_window_filler, axis=1).to_numpy().reshape(-1, 1)
+    filled_nan = temp_df[temp_nan_index].apply(inner_window_filler, axis=1).to_numpy().reshape(-1, 1)
 
+    temp_mean = np.nanmean(temp_array).sum()
+    filled_nan = np.nan_to_num(filled_nan, nan=temp_mean)
     return pd.Series([filled_nan, final_temp_nan_index])
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset("0.01")
-    # window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
-    window_sizes = [4, 6, 8, 10, 12, 24, 48]
+    x, x_nan = get_dataset("0.5")
+    window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
+    # window_sizes = [4, 6, 8, 10, 12, 24, 48]
     for temp_window_size in window_sizes:
         filled_users = apply_parallel(x_nan.groupby("id"), fill_nan, temp_window_size)
         filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])

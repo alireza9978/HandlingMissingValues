@@ -39,12 +39,12 @@ method_name_single_feature_window = [
 ]
 
 methods_multiple_feature = [importlib.import_module("Regression.Linear"),
-                            importlib.import_module("Hot Deck.Hot Deck"),
+                            # importlib.import_module("Hot Deck.Hot Deck"),
                             # importlib.import_module("Jung.MultiLayerPerceptron"),
                             importlib.import_module("SVR.SVR")]
 
 method_name_multiple_feature = ["Linear Regression",
-                                "Hot Deck",
+                                # "Hot Deck",
                                 # "Multi Layer Perceptron",
                                 "SVR"]
 
@@ -58,8 +58,20 @@ methods_name_multiple_feature_multi_params = [
 #
 # method_name_complete_feature = ["Regression Every Day", ]
 
-for nan_percent in nan_percents_str[0:1]:
+for nan_percent in nan_percents_str:
     result_df = pd.DataFrame()
+    x, x_nan = get_dataset_fully_modified_date(nan_percent)
+    for i in range(len(methods_multiple_feature_multi_params)):
+        for param in methods_multiple_feature_multi_params[i].params:
+            filled_users = apply_parallel(x_nan.groupby("id"), methods_multiple_feature_multi_params[i].fill_nan, param)
+            filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+            temp_result_list = ["{}_param_{}".format(methods_name_multiple_feature_multi_params[i], param), nan_percent]
+            for measure in measures:
+                measured_value = evaluate_dataframe(filled_users, measure)
+                temp_result_list.append(measured_value)
+            result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
+        print("method {} finished".format(methods_name_multiple_feature_multi_params[i]))
+
     x, x_nan = get_dataset(nan_percent)
     for i in range(len(method_name_single_feature)):
         filled_users = apply_parallel(x_nan.groupby("id"), methods_single_feature[i].fill_nan)
@@ -94,18 +106,6 @@ for nan_percent in nan_percents_str[0:1]:
             temp_result_list.append(measured_value)
         result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
         print("method {} finished".format(method_name_multiple_feature[i]))
-
-    x, x_nan = get_dataset_fully_modified_date(nan_percent)
-    for i in range(len(methods_multiple_feature_multi_params)):
-        for param in methods_multiple_feature_multi_params[i].params:
-            filled_users = apply_parallel(x_nan.groupby("id"), methods_multiple_feature_multi_params[i].fill_nan)
-            filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-            temp_result_list = ["{}_param_{}".format(method_name_single_feature_window[i], param), nan_percent]
-            for measure in measures:
-                measured_value = evaluate_dataframe(filled_users, measure)
-                temp_result_list.append(measured_value)
-            result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
-        print("method {} finished".format(methods_multiple_feature_multi_params[i]))
 
     # x, x_nan = get_complete_dataset(nan_percent)
     # for i in range(len(methods_complete_feature)):

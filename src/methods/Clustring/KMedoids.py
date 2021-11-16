@@ -7,11 +7,11 @@ from src.preprocessing.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
 
 
-def fill_nan(temp_df: pd.DataFrame):
+def fill_nan(temp_df: pd.DataFrame, medoids):
     x_train = temp_df.drop(columns=["id", "usage"]).to_numpy()
 
     calculated_distances = pairwise_distances(x_train)
-    temp_result = kmedoids.fasterpam(calculated_distances, 5)
+    temp_result = kmedoids.fasterpam(calculated_distances, medoids)
     # impute missing values with mean value of each cluster
     temp_df["cluster_label"] = temp_result.labels
     clusters_mean = temp_df[~temp_df["usage"].isna()].groupby("cluster_label").agg({"usage": "mean"})
@@ -25,7 +25,7 @@ def fill_nan(temp_df: pd.DataFrame):
 
 if __name__ == '__main__':
     x, x_nan = get_dataset_fully_modified_date("0.01")
-    x_nan = x_nan[x_nan.id == 56]
-    filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
-    filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-    print(evaluate_dataframe(filled_users, mean_square_error))
+    for i in range(2, 10):
+        filled_users = apply_parallel(x_nan.groupby("id"), fill_nan, i)
+        filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+        print(evaluate_dataframe(filled_users, mean_square_error))

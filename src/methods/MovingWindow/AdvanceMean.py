@@ -6,6 +6,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_dataset_date_modified
+from src.utils.parallelizem import apply_parallel
 
 
 def weighted_mean_squared_error(weights, *args):
@@ -50,12 +51,12 @@ def fill_nan(temp_df: pd.DataFrame, k=20):
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset_date_modified("0.01")
+    x, x_nan = get_dataset_date_modified("0.15")
     x_nan = x_nan[x_nan.id == 18]
     x = x[x.id == 18]
     x_size = [10, 20, 30, 40, 50]
     for size in x_size:
-        filled_users = x_nan.groupby("id").apply(fill_nan, size)
+        filled_users = apply_parallel(x_nan.groupby("id"), fill_nan, size)
         filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
         print("x size = ", size)
         print(evaluate_dataframe(filled_users, mean_square_error))
