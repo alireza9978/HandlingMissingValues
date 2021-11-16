@@ -2,7 +2,7 @@ import importlib
 
 from src.measurements.Measurements import *
 from src.preprocessing.insert_nan import nan_percents_str
-from src.preprocessing.load_dataset import get_dataset, get_dataset_fully_modified_date, get_complete_dataset
+from src.preprocessing.load_dataset import get_dataset, get_dataset_fully_modified_date
 from src.preprocessing.load_dataset import root as root_path
 from src.utils.parallelizem import apply_parallel
 
@@ -41,18 +41,22 @@ method_name_single_feature_window = [
 methods_multiple_feature = [importlib.import_module("Regression.Linear"),
                             importlib.import_module("Hot Deck.Hot Deck"),
                             # importlib.import_module("Jung.MultiLayerPerceptron"),
-                            importlib.import_module("KNN.KNNImputer"),
                             importlib.import_module("SVR.SVR")]
 
 method_name_multiple_feature = ["Linear Regression",
                                 "Hot Deck",
                                 # "Multi Layer Perceptron",
-                                "KNN Imputer",
                                 "SVR"]
 
-methods_complete_feature = [importlib.import_module("Regression.EveryDayLinear"), ]
+methods_multiple_feature_multi_params = [
+    importlib.import_module("KNN.KNNImputer")]
 
-method_name_complete_feature = ["Regression Every Day", ]
+methods_name_multiple_feature_multi_params = [
+    "KNN Imputer"]
+
+# methods_complete_feature = [importlib.import_module("Regression.EveryDayLinear"), ]
+#
+# method_name_complete_feature = ["Regression Every Day", ]
 
 for nan_percent in nan_percents_str[0:1]:
     result_df = pd.DataFrame()
@@ -91,16 +95,28 @@ for nan_percent in nan_percents_str[0:1]:
         result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
         print("method {} finished".format(method_name_multiple_feature[i]))
 
-    x, x_nan = get_complete_dataset(nan_percent)
-    for i in range(len(methods_complete_feature)):
-        filled_users = apply_parallel(x_nan.groupby("id"), methods_complete_feature[i].fill_nan)
-        filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-        temp_result_list = [method_name_complete_feature[i]]
-        for measure in measures:
-            measured_value = evaluate_dataframe(filled_users, measure)
-            temp_result_list.append(measured_value)
-        print("method {} finished".format(method_name_complete_feature[i]))
-        result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
+    x, x_nan = get_dataset_fully_modified_date(nan_percent)
+    for i in range(len(methods_multiple_feature_multi_params)):
+        for param in methods_multiple_feature_multi_params[i].params:
+            filled_users = apply_parallel(x_nan.groupby("id"), methods_multiple_feature_multi_params[i].fill_nan)
+            filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+            temp_result_list = ["{}_param_{}".format(method_name_single_feature_window[i], param), nan_percent]
+            for measure in measures:
+                measured_value = evaluate_dataframe(filled_users, measure)
+                temp_result_list.append(measured_value)
+            result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
+        print("method {} finished".format(methods_multiple_feature_multi_params[i]))
+
+    # x, x_nan = get_complete_dataset(nan_percent)
+    # for i in range(len(methods_complete_feature)):
+    #     filled_users = apply_parallel(x_nan.groupby("id"), methods_complete_feature[i].fill_nan)
+    #     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+    #     temp_result_list = [method_name_complete_feature[i]]
+    #     for measure in measures:
+    #         measured_value = evaluate_dataframe(filled_users, measure)
+    #         temp_result_list.append(measured_value)
+    #     print("method {} finished".format(method_name_complete_feature[i]))
+    #     result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
 
     result_df.columns = ["Method", "Nan Percent", "Mean Square Error", "Mean Absolute Error",
                          "Mean Absolute Percentage Error"]
