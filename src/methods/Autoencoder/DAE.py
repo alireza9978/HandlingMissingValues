@@ -2,8 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from keras import Input
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, Dropout, Flatten,Input
 from keras.layers import Conv1D, Conv1DTranspose
 from keras.models import Sequential, Model
 from sklearn.preprocessing import MinMaxScaler
@@ -53,13 +52,14 @@ def training(train, train_not_nan):
     # model.add(Dropout(0.2))
 
     autoencoder = Model(input_layer, decoded)
-    autoencoder.compile(optimizer='adam', loss='mean_squared_error')
+    optimizer = tf.optimizers.Adam(clipvalue=0.5)
+    autoencoder.compile(optimizer=optimizer, loss='mean_squared_error')
     print(autoencoder.summary())
-    autoencoder.fit(train_dataset, epochs=5, verbose=2)
+    autoencoder.fit(train_dataset, epochs=5, verbose=1)
     # model.fit(train, consumptions, epochs=150, batch_size=batch_size, verbose=2, shuffle=False)
     return autoencoder
 
-
+# train_dataset.take(1).as_numpy_iterator().next()[1]
 if __name__ == '__main__':
     x, x_nan = get_dataset_fully_modified_date("0.05")
     x_nan.drop(columns=['year', 'winter', 'spring', 'summer', 'fall', 'holiday', 'weekend', 'temperature', 'humidity',
@@ -76,6 +76,8 @@ if __name__ == '__main__':
     user, nan_index = preimputation(user)
     user, scaler = normalize_user_usage(user, scaler)
     real, scaler = normalize_user_usage(real, scaler)
+    user = user.drop(columns = ['id'])
+    real = real.drop(columns = ['id'])
     user = user.to_numpy()
     user = user[:int(user.shape[0] / 24) * 24, :]
     user = user.reshape(int(user.shape[0] / 24), 24, user.shape[1])
@@ -83,7 +85,7 @@ if __name__ == '__main__':
     real = real[:int(real.shape[0] / 24) * 24, :]
     real = real.reshape(int(real.shape[0] / 24), 24, real.shape[1])
     autoencoder = training(user, real)
-    print(user)
+    # print(user)
     # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     # # filled_users = x_nan.groupby("id").apply(fill_nan)
     # filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
