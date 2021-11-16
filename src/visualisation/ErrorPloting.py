@@ -26,7 +26,7 @@ def plot_highest_errors(main_df, filled_users, model_name):
             ax.set(xlabel='time', ylabel='usage')
         fig.tight_layout()
         fig.savefig(root + f"results/errors/{model_name}_{temp_user_id}.jpeg")
-        fig.close()
+        plt.close()
 
     filled_users.apply(inner_plot, args=[10], axis=1)
 
