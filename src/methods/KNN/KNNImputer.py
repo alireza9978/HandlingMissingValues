@@ -6,6 +6,8 @@ from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
 
+params = [12, 24, 72]
+
 
 def normalize_user_usage(user):
     scaler = MinMaxScaler()
@@ -13,13 +15,13 @@ def normalize_user_usage(user):
     return user, scaler
 
 
-def fill_nan(user: pd.DataFrame):
+def fill_nan(user: pd.DataFrame, n_neighbors):
     user = user.copy()
     # getting the nan indexes
     nan_row = user[user["usage"].isna()]
     nan_index = nan_row.index.to_numpy()
     # define imputer
-    imputer = KNNImputer(n_neighbors=14, weights='distance', metric='nan_euclidean')
+    imputer = KNNImputer(n_neighbors=n_neighbors, weights='distance', metric='nan_euclidean')
     # fit on the dataset
     user['usage'] = imputer.fit_transform(user)[:, 1]  # change 1 to the number of column containing missing values
     filled_nans = user['usage'][nan_index].to_numpy().reshape(-1, 1)
@@ -28,6 +30,7 @@ def fill_nan(user: pd.DataFrame):
 
 if __name__ == '__main__':
     x, x_nan = get_dataset_fully_modified_date(nan_percent='0.05')
-    filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
-    filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-    print(evaluate_dataframe(filled_users, mean_square_error))
+    for i in params:
+        filled_users = apply_parallel(x_nan.groupby("id"), fill_nan, i)
+        filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
+        print(i, evaluate_dataframe(filled_users, mean_square_error))
