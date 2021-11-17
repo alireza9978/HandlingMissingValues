@@ -6,6 +6,10 @@ from src.preprocessing.load_dataset import get_dataset
 from src.utils.parallelizem import apply_parallel
 
 
+def get_name():
+    return "Moving_Window_Mean"
+
+
 def fill_nan(temp_df: pd.DataFrame, window_size):
     import swifter
     _ = swifter.config

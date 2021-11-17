@@ -28,8 +28,12 @@ def fill_nan(user_data):
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset(nan_percent='0.05')
-    # x_nan = x_nan[x_nan.id == 100]
+    x, x_nan = get_dataset(nan_percent='0.1')
+    x_nan = x_nan[x_nan.id == 100]
     filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
+
+
+def get_name():
+    return "ARIMA"

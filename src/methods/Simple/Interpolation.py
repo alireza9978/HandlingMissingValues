@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 from src.measurements.Measurements import mean_square_error, evaluate_dataframe
 from src.preprocessing.load_dataset import get_dataset
 
@@ -20,3 +21,7 @@ if __name__ == '__main__':
     filled_users = x_nan.groupby("id").apply(fill_nan)
     filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
     print(evaluate_dataframe(filled_users, mean_square_error))
+
+
+def get_name():
+    return "Interpolation"
