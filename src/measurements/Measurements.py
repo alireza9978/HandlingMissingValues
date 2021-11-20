@@ -2,12 +2,19 @@ import numpy as np
 import pandas as pd
 
 
-def mean_square_error(x: np.ndarray, x_filled_nan: np.ndarray):
+def root_mean_square_error(x: np.ndarray, x_filled_nan: np.ndarray):
     diff = x - x_filled_nan
     diff2 = np.square(diff)
     diff2_mean = np.mean(diff2)
     root_diff2_mean = np.sqrt(diff2_mean)
     return root_diff2_mean
+
+
+def mean_square_error(x: np.ndarray, x_filled_nan: np.ndarray):
+    diff = x - x_filled_nan
+    diff2 = np.square(diff)
+    diff2_mean = np.mean(diff2)
+    return diff2_mean
 
 
 def mean_absolute_error(x: np.ndarray, x_filled_nan: np.ndarray):
@@ -50,10 +57,10 @@ def calculate_measures(x: np.ndarray, x_filled_nan: np.ndarray):
 
 
 if __name__ == '__main__':
-    # test_x = np.array([1, 2, 3, 4])
-    # test_x_nan = np.array([1, 2, np.nan, 4])
+    filled = np.array([1, 2.5, 3, 4.5, 1]).reshape(-1, 1)
+    real = np.array([1, 2, 3, 4, 0]).reshape(-1, 1)
     # filled_x = np.array([1, 2, 2.5, 4])
-    test_x = np.array([1, 2])
+    # test_x = np.array([1, 2])
     # test_x_nan = np.array([np.nan])
-    filled_x = np.array([1.5, 2])
-    calculate_measures(test_x, filled_x)
+    # filled_x = np.array([1.5, 2])
+    calculate_measures(real, filled)

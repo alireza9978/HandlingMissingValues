@@ -11,9 +11,9 @@ nan_percents_str = ["0.01", "0.05", "0.1", "0.15", "0.2",
 
 if __name__ == '__main__':
     file_name = "smart_star_hourly_date_modified"
-    main_df = pd.read_csv(Path(root + "datasets/{}.csv".format(file_name)))
 
     for percent in nan_percents:
+        main_df = pd.read_csv(Path(root + "datasets/{}.csv".format(file_name)))
         record_count = main_df.shape[0]
         random_index = np.random.choice(range(record_count), int(record_count * percent), replace=False)
         main_df.loc[random_index, "usage"] = np.nan
