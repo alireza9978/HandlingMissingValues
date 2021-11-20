@@ -8,7 +8,7 @@ from src.preprocessing.convert_timestamps import convert_date
 # root = "E:/HandlingMissingValues/"
 # root = "/home/alireza/projects/python/HandlingMissingValues/"
 root = "/home/ippbx/PycharmProjects/HandlingMissingValues/"
-# root = 'h:/Projects/Datasets/Smart/'
+root = 'h:/Projects/Datasets/Smart/'
 
 
 def get_dataset(nan_percent: str):
