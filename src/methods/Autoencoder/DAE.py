@@ -89,10 +89,13 @@ def fill_nan(x,x_nan):
     test_set_real = real[500:, :, :]
     autoencoder = training(train_set_user, train_set_real)
     predictions = testing(test_set_user, autoencoder)
-    predictions = predictions[:, :, 0]
+    test_set_user = test_set_user[:, :, 0].reshape(test_set_user.shape[0] * test_set_user.shape[1])
+    test_set_user = scaler.inverse_transform(test_set_user.reshape(-1, 1)).reshape(test_set_user.shape[0],)
+    predictions = predictions[:, :, 0] # usage is in the second column
     predictions = predictions.reshape(predictions.shape[0] * predictions.shape[1])
     predictions = scaler.inverse_transform(predictions.reshape(-1,1))
-    real = real[:, :, 0]
+    nan_indices = np.where(test_set_user == -1)[0]
+    real = test_set_real[:, :, 0] # usage is in the second column
     real = real.reshape(real.shape[0] * real.shape[1])
     real = scaler.inverse_transform(real.reshape(-1, 1))
 
