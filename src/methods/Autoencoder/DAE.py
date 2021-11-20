@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from keras.layers import Dense, Dropout, Flatten,Input
+from keras.layers import Dense, Dropout, Flatten, Input
 from keras.layers import Conv1D, Conv1DTranspose
 from keras.models import Sequential, Model
 from sklearn.preprocessing import MinMaxScaler
@@ -20,9 +20,11 @@ def select_user_data(df, temp_id):
     return df.loc[df.id == temp_id].copy()
 
 
-def normalize_user_usage(user, scaler):
+def normalize_user_usage(user, real_data):
+    scaler = MinMaxScaler()
     user['usage'] = scaler.fit_transform(user['usage'].to_numpy().reshape(-1, 1))
-    return user, scaler
+    real_data['usage'] = scaler.transform(real_data['usage'].to_numpy().reshape(-1, 1))
+    return user, real_data, scaler
 
 
 def preimputation(user: pd.DataFrame):
@@ -33,10 +35,19 @@ def preimputation(user: pd.DataFrame):
     return user, nan_index
 
 
+def prepration(user_data, real_data, vector_length):
+    user = user_data.drop(columns=['id'])
+    real = real_data.drop(columns=['id'])
+    user = user.to_numpy()
+    user = user[:int(user.shape[0] / vector_length) * vector_length, :]
+    user = user.reshape(int(user.shape[0] / vector_length), vector_length, user.shape[1])
+    real = real.to_numpy()
+    real = real[:int(real.shape[0] / vector_length) * vector_length, :]
+    real = real.reshape(int(real.shape[0] / vector_length), vector_length, real.shape[1])
+    return user, real
+
+
 def training(train, train_not_nan):
-    # trainX = np.reshape(train, (train.shape[0], train.shape[1], 1))
-    # print(trainX[0])
-    # create and fit the LSTM network
     batch_size = 32
     train_dataset = tf.data.Dataset.from_tensor_slices((train, train_not_nan)).batch(32)
     input_layer = Input(shape=(train.shape[1], train.shape[2],))
@@ -48,16 +59,47 @@ def training(train, train_not_nan):
     # Decoder
     layer2_ = Dense(32, activation='relu')(encodings)
     layer1_ = Conv1DTranspose(64, 3, padding='valid')(layer2_)
-    decoded = Conv1D(train.shape[2],3, activation="sigmoid", padding="same")(layer1_)
-    # model.add(Dropout(0.2))
-
+    decoded = Conv1D(train.shape[2], 3, activation="sigmoid", padding="same")(layer1_)
     autoencoder = Model(input_layer, decoded)
-    optimizer = tf.optimizers.Adam(clipvalue=0.5)
-    autoencoder.compile(optimizer=optimizer, loss='mean_squared_error')
+    # optimizer = tf.optimizers.Adam(clipvalue=0.5)
+    autoencoder.compile(optimizer='adam', loss='mean_squared_error')
     print(autoencoder.summary())
-    autoencoder.fit(train_dataset, epochs=5, verbose=1)
+    autoencoder.fit(train_dataset, epochs=100, verbose=1)
     # model.fit(train, consumptions, epochs=150, batch_size=batch_size, verbose=2, shuffle=False)
     return autoencoder
+
+
+def testing(test, autoencoder):
+    test_dataset = tf.data.Dataset.from_tensor_slices(test).batch(32)
+    predictions = autoencoder.predict(test_dataset)
+    return predictions
+
+def fill_nan(x,x_nan):
+    user = select_user_data(x_nan, 100)
+    real = select_user_data(x, 100)
+    user, nan_index = preimputation(user)
+    print(user.columns)
+    user, real, scaler = normalize_user_usage(user, real)
+    vector_length = 24
+    user, real = prepration(user, real, vector_length)
+    # 500 data points are used for training the rest for testing
+    train_set_user = user[:500, :, :]
+    train_set_real = real[:500, :, :]
+    test_set_user = user[500:, :, :]
+    test_set_real = real[500:, :, :]
+    autoencoder = training(train_set_user, train_set_real)
+    predictions = testing(test_set_user, autoencoder)
+    test_set_user = test_set_user[:, :, 0].reshape(test_set_user.shape[0] * test_set_user.shape[1])
+    test_set_user = scaler.inverse_transform(test_set_user.reshape(-1, 1)).reshape(test_set_user.shape[0],)
+    predictions = predictions[:, :, 0] # usage is in the second column
+    predictions = predictions.reshape(predictions.shape[0] * predictions.shape[1])
+    predictions = scaler.inverse_transform(predictions.reshape(-1,1))
+    nan_indices = np.where(test_set_user == -1)[0]
+    real = test_set_real[:, :, 0] # usage is in the second column
+    real = real.reshape(real.shape[0] * real.shape[1])
+    real = scaler.inverse_transform(real.reshape(-1, 1))
+
+
 
 # train_dataset.take(1).as_numpy_iterator().next()[1]
 if __name__ == '__main__':
@@ -70,21 +112,7 @@ if __name__ == '__main__':
                     'visibility', 'apparentTemperature', 'pressure', 'windSpeed',
                     'cloudCover', 'windBearing', 'precipIntensity', 'dewPoint',
                     'precipProbability'], inplace=True)
-    scaler = MinMaxScaler()
-    user = select_user_data(x_nan, 100)
-    real = select_user_data(x, 100)
-    user, nan_index = preimputation(user)
-    user, scaler = normalize_user_usage(user, scaler)
-    real, scaler = normalize_user_usage(real, scaler)
-    user = user.drop(columns = ['id'])
-    real = real.drop(columns = ['id'])
-    user = user.to_numpy()
-    user = user[:int(user.shape[0] / 24) * 24, :]
-    user = user.reshape(int(user.shape[0] / 24), 24, user.shape[1])
-    real = real.to_numpy()
-    real = real[:int(real.shape[0] / 24) * 24, :]
-    real = real.reshape(int(real.shape[0] / 24), 24, real.shape[1])
-    autoencoder = training(user, real)
+    fill_nan(x,x_nan)
     # print(user)
     # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     # # filled_users = x_nan.groupby("id").apply(fill_nan)
