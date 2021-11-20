@@ -54,7 +54,7 @@ if __name__ == '__main__':
     x, x_nan = get_dataset_date_modified("0.15")
     x_nan = x_nan[x_nan.id == 18]
     x = x[x.id == 18]
-    x_size = [10, 20, 30, 40, 50]
+    x_size = [4, 6, 8]
     for size in x_size:
         filled_users = apply_parallel(x_nan.groupby("id"), fill_nan, size)
         filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
