@@ -1,9 +1,12 @@
 import pandas as pd
 from sklearn.svm import SVR
 
-from src.measurements.Measurements import evaluate_dataframe, mean_square_error
+from src.measurements.Measurements import mean_square_error, evaluate_dataframe_two
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date
-from src.utils.parallelizem import apply_parallel
+
+
+def get_name():
+    return "svr"
 
 
 def fill_nan(user_data: pd.DataFrame):
@@ -14,13 +17,19 @@ def fill_nan(user_data: pd.DataFrame):
     non_nan_rows = user.drop(index=nan_index)
     model = SVR(C=1000.0, epsilon=0.15, kernel='poly', gamma='scale', degree=5)
     model.fit(non_nan_rows.drop(columns=['usage']), non_nan_rows['usage'])
-    usage = model.predict(nan_row.drop(columns=['usage'])).reshape(-1,1)
-    return pd.Series([usage, nan_index])
+    usage = model.predict(nan_row.drop(columns=['usage'])).reshape(-1, 1)
+    return pd.DataFrame({"predicted_usage": usage.squeeze()},
+                        index=nan_index.squeeze())
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset_fully_modified_date(nan_percent='0.05')
-    filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
-    print("nan count = ", filled_users[0].isna().sum())
-    filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-    print(evaluate_dataframe(filled_users, mean_square_error))
+    from src.utils.Methods import fill_nan as fn
+    from src.utils.Dataset import get_random_user
+
+    nan_percent = "0.01"
+    x, x_nan = get_dataset_fully_modified_date(nan_percent=nan_percent)
+    x, x_nan = get_random_user(x, x_nan)
+    filled_users = fn(x, x_nan, fill_nan)
+    error, error_df = evaluate_dataframe_two(filled_users, mean_square_error)
+    print(error)
+    print(error_df)

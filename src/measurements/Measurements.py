@@ -24,9 +24,10 @@ def mean_absolute_error(x: np.ndarray, x_filled_nan: np.ndarray):
     return diff_abs_mean, diff_abs
 
 
-def mean_absolute_percentage_error(x: np.ndarray, x_filled_nan: np.ndarray):
+def mean_absolute_percentage_error(x: pd.Series, x_filled_nan: pd.Series):
     diff = x - x_filled_nan
-    not_zero_index = np.where(x != 0)[0]
+    not_zero_index = x != 0
+    not_zero_index = not_zero_index[not_zero_index].index
     diff = diff[not_zero_index]
     x = x[not_zero_index]
     diff_percent = np.divide(diff, x)

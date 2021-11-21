@@ -6,6 +6,7 @@ from src.methods.Simple import FirstObservationCarriedBackward, TotalMedian, Las
     Interpolation, TotalMean
 from src.methods.MovingWindow import Mean, WeightedMean, ExponentialMean
 from src.methods.ARIMA import ARIMA
+from src.methods.SVR import SVR
 from src.preprocessing.insert_nan import nan_percents_str
 from src.preprocessing.load_dataset import get_dataset, get_dataset_fully_modified_date
 from src.preprocessing.load_dataset import root as root_path
@@ -51,17 +52,15 @@ method_single_feature_param_value = [
     ExponentialMean.get_params(),
 ]
 
+methods_multiple_feature = [
+    SVR.fill_nan
+]
 
-#
-# methods_multiple_feature = [importlib.import_module("Regression.Linear"),
-#                             # importlib.import_module("Hot Deck.Hot Deck"),
-#                             # importlib.import_module("Jung.MultiLayerPerceptron"),
-#                             importlib.import_module("SVR.SVR")]
-#
-# method_name_multiple_feature = ["Linear Regression",
-#                                 # "Hot Deck",
-#                                 # "Multi Layer Perceptron",
-#                                 "SVR"]
+method_name_multiple_feature = [
+    SVR.get_name(),
+]
+
+
 #
 # methods_multiple_feature_multi_params = [
 #     importlib.import_module("KNN.KNNImputer")]
@@ -77,6 +76,5 @@ method_single_feature_param_value = [
 
 def fill_nan(temp_x: pd.DataFrame, temp_x_nan: pd.DataFrame, fill_nan_method, params=None) -> pd.DataFrame:
     temp_filled_users = apply_parallel(temp_x_nan.groupby("id"), fill_nan_method, params)
-    temp_filled_users = temp_filled_users.reset_index(level=0)
-    temp_filled_users = temp_filled_users.join(temp_x.drop(columns=["id", "date"]))
+    temp_filled_users = temp_filled_users.join(temp_x[["usage"]])
     return temp_filled_users
