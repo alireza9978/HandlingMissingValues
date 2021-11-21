@@ -2,21 +2,22 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 
-from src.measurements.Measurements import evaluate_dataframe, mean_square_error
+from src.measurements.Measurements import mean_square_error, evaluate_dataframe_two
 from src.preprocessing.load_dataset import get_dataset
-from src.utils.parallelizem import apply_parallel
-
-stds = [1, 2, 3, 4, 5, 6, 8, 12, 18]
-window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
 
 
-def fill_nan(temp_df: pd.DataFrame, window_size):
+def get_name():
+    return "moving_window_weighted_mean"
+
+
+def get_params():
+    return [(4, 1), (6, 2), (8, 3), (10, 4), (12, 5), (24, 6), (48, 8), (168, 12), (720, 18)]
+
+
+def fill_nan(temp_df: pd.DataFrame, params):
     import swifter
     _ = swifter.config
-    std = None
-    for window_index in range(len(window_sizes)):
-        if window_sizes[window_index] == window_size:
-            std = stds[window_index]
+    (window_size, std) = params
     final_temp_nan_index = temp_df.index[temp_df.usage.isna()].to_numpy()
     temp_df = temp_df.reset_index(drop=True)
     temp_array = temp_df.usage.to_numpy().reshape(-1, 1)
@@ -44,15 +45,17 @@ def fill_nan(temp_df: pd.DataFrame, window_size):
 
     temp_mean = np.nanmean(temp_array).sum()
     filled_nan = np.nan_to_num(filled_nan, nan=temp_mean)
-    return pd.Series([filled_nan, final_temp_nan_index])
+    return pd.DataFrame({"predicted_usage": filled_nan.squeeze()},
+                        index=final_temp_nan_index.squeeze())
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset("0.5")
-    for i in range(len(window_sizes)):
-        temp_window_size = window_sizes[i]
-        filled_users = apply_parallel(x_nan.groupby("id"), fill_nan, temp_window_size)
-        filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-        print("window size = ", temp_window_size)
-        print(evaluate_dataframe(filled_users, mean_square_error))
-        print()
+    from src.utils.Methods import fill_nan as fn
+
+    nan_percent = "0.01"
+    x, x_nan = get_dataset(nan_percent)
+    for param in get_params():
+        filled_users = fn(x, x_nan, fill_nan, param)
+        error, error_df = evaluate_dataframe_two(filled_users, mean_square_error)
+        print(error)
+        print(error_df)

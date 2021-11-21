@@ -1,13 +1,17 @@
 import numpy as np
 import pandas as pd
 
-from src.measurements.Measurements import evaluate_dataframe, mean_square_error
+from src.measurements.Measurements import evaluate_dataframe, mean_square_error, evaluate_dataframe_two
 from src.preprocessing.load_dataset import get_dataset
 from src.utils.parallelizem import apply_parallel
 
 
 def get_name():
-    return "Moving_Window_Mean"
+    return "moving_window_mean"
+
+
+def get_params():
+    return [4, 6, 8, 10, 12, 24, 48, 168, 720]
 
 
 def fill_nan(temp_df: pd.DataFrame, window_size):
@@ -34,16 +38,17 @@ def fill_nan(temp_df: pd.DataFrame, window_size):
 
     temp_mean = np.nanmean(temp_array).sum()
     filled_nan = np.nan_to_num(filled_nan, nan=temp_mean)
-    return pd.Series([filled_nan, final_temp_nan_index])
+    return pd.DataFrame({"predicted_usage": filled_nan.squeeze()},
+                        index=final_temp_nan_index.squeeze())
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset("0.5")
-    window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]
-    # window_sizes = [4, 6, 8, 10, 12, 24, 48]
-    for temp_window_size in window_sizes:
-        filled_users = apply_parallel(x_nan.groupby("id"), fill_nan, temp_window_size)
-        filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-        print("window size = ", temp_window_size)
-        print(evaluate_dataframe(filled_users, mean_square_error))
-        print()
+    from src.utils.Methods import fill_nan as fn
+
+    nan_percent = "0.01"
+    x, x_nan = get_dataset(nan_percent)
+    for temp_window_size in get_params():
+        filled_users = fn(x, x_nan, fill_nan, temp_window_size)
+        error, error_df = evaluate_dataframe_two(filled_users, mean_square_error)
+        print(error)
+        print(error_df)
