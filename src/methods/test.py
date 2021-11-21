@@ -3,9 +3,10 @@ from src.preprocessing.insert_nan import nan_percents_str
 from src.preprocessing.load_dataset import get_dataset
 from src.preprocessing.load_dataset import root as root_path
 from src.utils.Dataset import save_error
-from src.utils.Methods import fill_nan, measures_name
-from src.utils.Methods import method_name_single_feature, methods_single_feature, measures
-
+from src.utils.Methods import fill_nan, measures_name, measures
+from src.utils.Methods import method_name_single_feature, methods_single_feature
+from src.utils.Methods import method_name_single_feature_param, method_single_feature_param, \
+    method_single_feature_param_value
 
 if __name__ == '__main__':
 
@@ -21,6 +22,18 @@ if __name__ == '__main__':
                 temp_result_list.append(error)
             print("method {} finished".format(name))
             result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
+
+        for method, name, params in zip(method_single_feature_param, method_name_single_feature_param,
+                                        method_single_feature_param_value):
+            for param in params:
+                filled_users = fill_nan(x, x_nan, method, param)
+                temp_result_list = [name + str(param), nan_percent]
+                for measure, measure_name in zip(measures, measures_name):
+                    error, error_df = evaluate_dataframe_two(filled_users, measure)
+                    save_error(error_df, nan_percent, name, measure_name, param)
+                    temp_result_list.append(error)
+                print("method {} {} finished".format(name, param))
+                result_df = result_df.append(pd.Series(temp_result_list), ignore_index=True)
 
         # for i in range(len(method_name_single_feature_window)):
         #     window_sizes = [4, 6, 8, 10, 12, 24, 48, 168, 720]

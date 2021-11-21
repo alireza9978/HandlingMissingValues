@@ -4,6 +4,7 @@ from src.measurements.Measurements import *
 
 from src.methods.Simple import FirstObservationCarriedBackward, TotalMedian, LastObservationCarriedForward, \
     Interpolation, TotalMean
+from src.methods.MovingWindow import Mean, WeightedMean, ExponentialMean
 from src.methods.ARIMA import ARIMA
 from src.preprocessing.insert_nan import nan_percents_str
 from src.preprocessing.load_dataset import get_dataset, get_dataset_fully_modified_date
@@ -31,19 +32,26 @@ method_name_single_feature = [
     ARIMA.get_name()
 ]
 
+#
+method_single_feature_param = [
+    Mean.fill_nan,
+    WeightedMean.fill_nan,
+    ExponentialMean.fill_nan,
+]
 
-#
-# method_single_feature_window = [
-#     importlib.import_module("MovingWindow.Mean"),
-#     importlib.import_module("MovingWindow.WeightedMean"),
-#     importlib.import_module("MovingWindow.ExponentialMean")
-# ]
-#
-# method_name_single_feature_window = [
-#     "Moving Window Mean",
-#     "Moving Window Weighted Mean",
-#     "Moving Window Exponential Mean",
-# ]
+method_name_single_feature_param = [
+    Mean.get_name(),
+    WeightedMean.get_name(),
+    ExponentialMean.get_name(),
+]
+
+method_single_feature_param_value = [
+    Mean.get_params(),
+    WeightedMean.get_params(),
+    ExponentialMean.get_params(),
+]
+
+
 #
 # methods_multiple_feature = [importlib.import_module("Regression.Linear"),
 #                             # importlib.import_module("Hot Deck.Hot Deck"),
@@ -67,8 +75,8 @@ method_name_single_feature = [
 # method_name_complete_feature = ["Regression Every Day", ]
 
 
-def fill_nan(temp_x: pd.DataFrame, temp_x_nan: pd.DataFrame, fill_nan_method) -> pd.DataFrame:
-    temp_filled_users = apply_parallel(temp_x_nan.groupby("id"), fill_nan_method)
+def fill_nan(temp_x: pd.DataFrame, temp_x_nan: pd.DataFrame, fill_nan_method, params=None) -> pd.DataFrame:
+    temp_filled_users = apply_parallel(temp_x_nan.groupby("id"), fill_nan_method, params)
     temp_filled_users = temp_filled_users.reset_index(level=0)
     temp_filled_users = temp_filled_users.join(temp_x.drop(columns=["id", "date"]))
     return temp_filled_users

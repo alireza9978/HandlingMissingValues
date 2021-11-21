@@ -14,11 +14,15 @@ def get_random_user(x: pd.DataFrame, x_nan: pd.DataFrame) -> (pd.DataFrame, pd.D
     return x, x_nan
 
 
-def save_error(temp_df: pd.DataFrame, nan_percent: str, method_name: str, measure: str):
+def save_error(temp_df: pd.DataFrame, nan_percent: str, method_name: str, measure: str, params=None):
+    if params is not None:
+        method_name += str(params)
     path = root + f"results/errors/error_df_method_{method_name}_nan_{nan_percent}_{measure}.csv"
     temp_df.to_csv(path, index=False)
 
 
-def load_error(nan_percent: str, method_name: str, measure: str):
+def load_error(nan_percent: str, method_name: str, measure: str, params=None):
+    if params is not None:
+        method_name += str(params)
     path = root + f"results/errors/error_df_method_{method_name}_nan_{nan_percent}_{measure}.csv"
     return pd.read_csv(path)
