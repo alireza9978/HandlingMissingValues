@@ -9,6 +9,10 @@ from src.utils.Dataset import get_random_user, load_error
 from src.utils.Methods import method_name_single_feature, method_name_single_feature_param, \
     method_single_feature_param_value
 from src.utils.Methods import measures_name
+import tensorflow as tf
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow import keras
+from tensorflow.keras import layers
 
 
 def calculate_feature(temp_df: pd.DataFrame, window_size: int):
@@ -77,6 +81,43 @@ def calculate_error(error_df, prediction):
     return total / prediction.shape[0]
 
 
+def generate_train_test(feature_df, error_df):
+    x_train = feature_df[train_x_columns]
+    x_train = x_train.dropna()
+    y_train = feature_df["label"][x_train.index]
+    error_df = error_df.loc[x_train.index]
+    x_train, x_test, y_train, y_test, error_df_train, error_df_test = train_test_split(x_train, y_train, error_df,
+                                                                                       test_size=0.3)
+
+    scaler = MinMaxScaler()
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
+
+    return x_train, x_test, y_train, y_test, error_df_train, error_df_test
+
+
+def classification(x_train, x_test, y_train):
+    clf = RandomForestClassifier()
+    clf.fit(x_train, y_train)
+    temp_train_prediction = clf.predict(x_train)
+    temp_y_prediction = clf.predict(x_test)
+    return temp_train_prediction, temp_y_prediction
+
+
+# def classification_ann(x_train, x_test, y_train):
+#     inputs = layers.Input(shape=(input_shape,))
+#     model = layers.Dense(32, activation="relu")(inputs)
+#     model = layers.Dropout(0.25)(model)
+#     model = layers.Dense(64, activation="relu")(model)
+#     model = layers.Dropout(0.25)(model)
+#     model = layers.Dense(16, activation="relu")(model)
+#     model = layers.Dropout(0.25)(model)
+#     output = layers.Dense(1, activation="sigmoid")(model)
+#     model = keras.Model(inputs, output)
+#     model.compile("adam", "mean_squared_error")
+#     return temp_train_prediction, temp_y_prediction
+
+
 if __name__ == '__main__':
     nan_percent = "0.01"
     x, x_nan = get_dataset(nan_percent)
@@ -88,16 +129,9 @@ if __name__ == '__main__':
     moving_features, usage_error_df = add_label(moving_features, methods_name)
     method_results = usage_error_df.mean()
 
-    train_x = moving_features[train_x_columns]
-    train_x = train_x.dropna()
-    train_y = moving_features["label"][train_x.index]
-    usage_error_df = usage_error_df.loc[train_x.index]
-    train_x, test_x, train_y, test_y, train_error_df, test_error_df = train_test_split(train_x, train_y, usage_error_df,
-                                                                                       test_size=0.3)
-    clf = RandomForestClassifier(n_estimators=32, max_depth=5, min_samples_leaf=4)
-    clf.fit(train_x, train_y)
-    train_prediction = clf.predict(train_x)
-    y_prediction = clf.predict(test_x)
+    train_x, test_x, train_y, test_y, train_error_df, test_error_df = generate_train_test(moving_features,
+                                                                                          usage_error_df)
+    train_prediction, y_prediction = classification(train_x, test_x, train_y)
 
     print("best mse: ", moving_features["minimum_error"].mean())
     print("best mse for single method: ", method_results[method_results.argmin()],
