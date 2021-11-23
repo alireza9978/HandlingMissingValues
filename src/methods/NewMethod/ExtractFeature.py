@@ -2,7 +2,8 @@ import pandas as pd
 
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split
 from src.preprocessing.load_dataset import get_dataset
 from src.utils.Dataset import get_random_user, load_error
@@ -53,15 +54,15 @@ def add_methods_result(temp_df: pd.DataFrame):
         method_columns.append(name)
         error_df.columns = temp_columns
         temp_df = temp_df.join(error_df[[name, "index"]].set_index("index"))
-    for name, params in zip(method_name_single_feature_param, method_single_feature_param_value):
-        for param in params:
-            error_df = load_error(nan_percent, name, measures_name[0], param)
-            temp_columns = error_df.columns.to_list()
-            temp_name = name + str(param)
-            temp_columns[-1] = temp_name
-            method_columns.append(temp_name)
-            error_df.columns = temp_columns
-            temp_df = temp_df.join(error_df[[temp_name, "index"]].set_index("index"))
+    # for name, params in zip(method_name_single_feature_param, method_single_feature_param_value):
+    #     for param in params:
+    #         error_df = load_error(nan_percent, name, measures_name[0], param)
+    #         temp_columns = error_df.columns.to_list()
+    #         temp_name = name + str(param)
+    #         temp_columns[-1] = temp_name
+    #         method_columns.append(temp_name)
+    #         error_df.columns = temp_columns
+    #         temp_df = temp_df.join(error_df[[temp_name, "index"]].set_index("index"))
     return temp_df, method_columns
 
 
@@ -104,22 +105,37 @@ def classification(x_train, x_test, y_train):
     return temp_train_prediction, temp_y_prediction
 
 
-# def classification_ann(x_train, x_test, y_train):
-#     inputs = layers.Input(shape=(input_shape,))
-#     model = layers.Dense(32, activation="relu")(inputs)
-#     model = layers.Dropout(0.25)(model)
-#     model = layers.Dense(64, activation="relu")(model)
-#     model = layers.Dropout(0.25)(model)
-#     model = layers.Dense(16, activation="relu")(model)
-#     model = layers.Dropout(0.25)(model)
-#     output = layers.Dense(1, activation="sigmoid")(model)
-#     model = keras.Model(inputs, output)
-#     model.compile("adam", "mean_squared_error")
-#     return temp_train_prediction, temp_y_prediction
+def classification_ann(x_train, x_test, y_train):
+    encoder = OneHotEncoder()
+    y_train = encoder.fit_transform(y_train.to_numpy().reshape(-1, 1)).todense()
+
+    inputs = layers.Input(shape=(x_train.shape[1],))
+    model = layers.Dense(21, activation="relu")(inputs)
+    model = layers.Dropout(0.25)(model)
+    model = layers.Dense(21, activation="relu")(model)
+    model = layers.Dropout(0.25)(model)
+    output = layers.Dense(y_train.shape[1], activation="sigmoid")(model)
+    model = keras.Model(inputs, output)
+    model.compile(optimizer='adam', loss=tf.keras.losses.CategoricalCrossentropy(), metrics=['accuracy'])
+
+    train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(32)
+    model.fit(train_dataset, epochs=100)
+    temp_train_prediction = model.predict(x_train)
+    temp_train_prediction = encoder.inverse_transform(temp_train_prediction).squeeze()
+    temp_test_prediction = model.predict(x_test)
+    temp_test_prediction = encoder.inverse_transform(temp_test_prediction).squeeze()
+
+    return temp_train_prediction, temp_test_prediction
+
+
+def clustering(x_train, x_test, y_train, y_test):
+    clu = KMeans()
+    clu.fit_transform(x_train,)
+    pass
 
 
 if __name__ == '__main__':
-    nan_percent = "0.01"
+    nan_percent = "0.1"
     x, x_nan = get_dataset(nan_percent)
     (x, x_nan) = get_random_user(x, x_nan)
     moving_features = x_nan.groupby("id").apply(calculate_feature, 12)
@@ -131,9 +147,12 @@ if __name__ == '__main__':
 
     train_x, test_x, train_y, test_y, train_error_df, test_error_df = generate_train_test(moving_features,
                                                                                           usage_error_df)
-    train_prediction, y_prediction = classification(train_x, test_x, train_y)
+    # train_prediction, y_prediction = clustering(train_x, test_x, train_y, test_y)
+    train_prediction, y_prediction = classification_ann(train_x, test_x, train_y)
 
-    print("best mse: ", moving_features["minimum_error"].mean())
+    print("best train mse: ", calculate_error(train_error_df, train_y.to_numpy()))
+    print("best test  mse: ", calculate_error(test_error_df, test_y.to_numpy()))
+
     print("best mse for single method: ", method_results[method_results.argmin()],
           method_results.index[method_results.argmin()])
     print("train: ")
