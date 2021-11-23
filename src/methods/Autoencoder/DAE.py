@@ -1,118 +1,153 @@
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
-from keras.layers import Dense, Dropout, Flatten, Input
-from keras.layers import Conv1D, Conv1DTranspose
-from keras.models import Sequential, Model
-from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
-from src.measurements.Measurements import evaluate_dataframe, mean_square_error
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date
-from src.utils.parallelizem import apply_parallel
+from keras.layers import Conv1D, Conv1DTranspose
+from keras.layers import Dense, Input
+from keras.models import Model
+from sklearn.preprocessing import MinMaxScaler
+
+from src.measurements.Measurements import mean_square_error, evaluate_dataframe_two
+from src.preprocessing.load_dataset import get_dataset_fully_modified_date_auto
 
 
-def read_data(address):
-    return pd.read_csv(Path(address))
+class DAE:
+
+    def __init__(self, temp_df: pd.DataFrame):
+        self.df = temp_df
+        self.train_percent = 0.3
+        self.vector_length = 24
+        self.batch_size = 32
+        self.epochs = 200
+
+        self.autoencoder = None
+        self.train_df = None
+        self.test_df = None
+        self.train_x = None
+        self.train_y = None
+        self.test_x = None
+        self.test_y = None
+        self.df_nan_indexes = None
+        self.scaler = DAE._generate_scaler()
+        self.preimputation()
+        self.normalize_user_usage()
+        self.split_df()
+        self.preparation()
+
+    @staticmethod
+    def _generate_scaler():
+        return MinMaxScaler()
+
+    def split_df(self):
+        total_count = self.df.shape[0]
+        starting_index = self.df.index[0]
+        ending_index = self.df.index[-1]
+        test_start_index = ending_index - int(total_count * self.train_percent)
+        self.df.loc[starting_index:test_start_index - 1, "train"] = True
+        self.df.loc[test_start_index:ending_index, "train"] = False
+        self.train_df = self.df[self.df.train].copy().drop(columns=["train"]).reset_index(drop=True)
+        self.test_df = self.df[self.df.train == False].copy().drop(columns=["train"]).reset_index(drop=True)
+        self.df_nan_indexes = self.df_nan_indexes[self.df.train == False].index
+
+    def normalize_user_usage(self):
+        self.df['usage'] = self.scaler.fit_transform(self.df['usage'].to_numpy().reshape(-1, 1))
+        self.df['real_usage'] = self.scaler.transform(self.df['real_usage'].to_numpy().reshape(-1, 1))
+
+    def preimputation(self):
+        self.df_nan_indexes = self.df["usage"].isna()
+        self.df['usage'] = self.df['usage'].fillna(-1)
+
+    def preparation(self):
+        self.train_df = self.train_df.drop(columns=['id'])
+        self.test_df = self.test_df.drop(columns=['id'])
+
+        user = self.train_df.drop(columns=['real_usage'])
+
+        real = self.train_df.copy()
+        real["usage"] = real["real_usage"]
+        real = real.drop(columns=['real_usage'])
+
+        user_test = self.test_df.drop(columns=['real_usage'])
+
+        real_test = self.test_df.copy()
+        real_test["usage"] = real_test["real_usage"]
+        real_test = real_test.drop(columns=['real_usage'])
+
+        result = []
+        for temp in [user, real, user_test, real_test]:
+            temp = temp.to_numpy()
+            temp = temp[:int(temp.shape[0] / self.vector_length) * self.vector_length, :]
+            temp = temp.reshape(int(temp.shape[0] / self.vector_length), self.vector_length, temp.shape[1])
+            result.append(temp)
+        self.train_x = result[0]
+        self.train_y = result[1]
+        self.test_x = result[2]
+        self.test_y = result[3]
+
+    def train(self):
+        train_dataset = tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y)).batch(self.batch_size)
+        input_layer = Input(shape=(self.train_x.shape[1], self.train_x.shape[2],))
+        # input_shape = (batch_size,train.shape[1],train.shape[2])
+
+        # Encoder
+        layer1 = Conv1D(64, 3, padding='valid')(input_layer)
+        layer2 = Dense(32, activation='relu')(layer1)
+        encodings = Dense(16, activation='relu')(layer2)
+        # Decoder
+        layer2_ = Dense(32, activation='relu')(encodings)
+        layer1_ = Conv1DTranspose(64, 3, padding='valid')(layer2_)
+        decoded = Conv1D(self.train_x.shape[2], 3, activation="sigmoid", padding="same")(layer1_)
+        autoencoder = Model(input_layer, decoded)
+        # optimizer = tf.optimizers.Adam(clipvalue=0.5)
+        autoencoder.compile(optimizer='adam', loss='mean_squared_error')
+        print(autoencoder.summary())
+        autoencoder.fit(train_dataset, epochs=self.epochs, verbose=2)
+        # model.fit(train, consumptions, epochs=150, batch_size=batch_size, verbose=2, shuffle=False)
+        self.autoencoder = autoencoder
+
+    def test(self):
+        test_dataset = tf.data.Dataset.from_tensor_slices(self.test_x).batch(self.batch_size)
+        predictions = self.autoencoder.predict(test_dataset)
+        return predictions
 
 
-def select_user_data(df, temp_id):
-    return df.loc[df.id == temp_id].copy()
+def fill_nan(temp_df: pd.DataFrame):
+    model = DAE(temp_df)
+    model.train()
+    predictions = model.test()
 
-
-def normalize_user_usage(user, real_data):
-    scaler = MinMaxScaler()
-    user['usage'] = scaler.fit_transform(user['usage'].to_numpy().reshape(-1, 1))
-    real_data['usage'] = scaler.transform(real_data['usage'].to_numpy().reshape(-1, 1))
-    return user, real_data, scaler
-
-
-def preimputation(user: pd.DataFrame):
-    nan_row = user[user["usage"].isna()]
-    nan_index = nan_row.index.to_numpy()
-    # Could do this for a percentage of data
-    user['usage'] = user['usage'].fillna(-1)
-    return user, nan_index
-
-
-def prepration(user_data, real_data, vector_length):
-    user = user_data.drop(columns=['id'])
-    real = real_data.drop(columns=['id'])
-    user = user.to_numpy()
-    user = user[:int(user.shape[0] / vector_length) * vector_length, :]
-    user = user.reshape(int(user.shape[0] / vector_length), vector_length, user.shape[1])
-    real = real.to_numpy()
-    real = real[:int(real.shape[0] / vector_length) * vector_length, :]
-    real = real.reshape(int(real.shape[0] / vector_length), vector_length, real.shape[1])
-    return user, real
-
-
-def training(train, train_not_nan):
-    batch_size = 32
-    train_dataset = tf.data.Dataset.from_tensor_slices((train, train_not_nan)).batch(32)
-    input_layer = Input(shape=(train.shape[1], train.shape[2],))
-    # input_shape = (batch_size,train.shape[1],train.shape[2])
-    # Encoder
-    layer1 = Conv1D(64, 3, padding='valid')(input_layer)
-    layer2 = Dense(32, activation='relu')(layer1)
-    encodings = Dense(16, activation='relu')(layer2)
-    # Decoder
-    layer2_ = Dense(32, activation='relu')(encodings)
-    layer1_ = Conv1DTranspose(64, 3, padding='valid')(layer2_)
-    decoded = Conv1D(train.shape[2], 3, activation="sigmoid", padding="same")(layer1_)
-    autoencoder = Model(input_layer, decoded)
-    # optimizer = tf.optimizers.Adam(clipvalue=0.5)
-    autoencoder.compile(optimizer='adam', loss='mean_squared_error')
-    print(autoencoder.summary())
-    autoencoder.fit(train_dataset, epochs=100, verbose=1)
-    # model.fit(train, consumptions, epochs=150, batch_size=batch_size, verbose=2, shuffle=False)
-    return autoencoder
-
-
-def testing(test, autoencoder):
-    test_dataset = tf.data.Dataset.from_tensor_slices(test).batch(32)
-    predictions = autoencoder.predict(test_dataset)
-    return predictions
-
-def fill_nan(x,x_nan):
-    user = select_user_data(x_nan, 100)
-    real = select_user_data(x, 100)
-    user, nan_index = preimputation(user)
-    print(user.columns)
-    user, real, scaler = normalize_user_usage(user, real)
-    vector_length = 24
-    user, real = prepration(user, real, vector_length)
-    # 500 data points are used for training the rest for testing
-    train_set_user = user[:500, :, :]
-    train_set_real = real[:500, :, :]
-    test_set_user = user[500:, :, :]
-    test_set_real = real[500:, :, :]
-    autoencoder = training(train_set_user, train_set_real)
-    predictions = testing(test_set_user, autoencoder)
-    test_set_user = test_set_user[:, :, 0].reshape(test_set_user.shape[0] * test_set_user.shape[1])
-    test_set_user = scaler.inverse_transform(test_set_user.reshape(-1, 1)).reshape(test_set_user.shape[0],)
-    predictions = predictions[:, :, 0] # usage is in the second column
+    test_set_user = model.test_x[:, :, 0].reshape(model.test_x.shape[0] * model.test_x.shape[1])
+    test_set_user = model.scaler.inverse_transform(test_set_user.reshape(-1, 1)).reshape(test_set_user.shape[0], )
+    predictions = predictions[:, :, 0]  # usage is in the second column
     predictions = predictions.reshape(predictions.shape[0] * predictions.shape[1])
-    predictions = scaler.inverse_transform(predictions.reshape(-1,1))
+    predictions = model.scaler.inverse_transform(predictions.reshape(-1, 1))
     nan_indices = np.where(test_set_user == -1)[0]
-    real = test_set_real[:, :, 0] # usage is in the second column
+    real = model.test_y[:, :, 0]  # usage is in the second column
     real = real.reshape(real.shape[0] * real.shape[1])
-    real = scaler.inverse_transform(real.reshape(-1, 1))
+    real = model.scaler.inverse_transform(real.reshape(-1, 1))
+    print(real)
+    return pd.DataFrame(
+        {'usage': temp_df.loc[model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:]]['usage'].to_numpy(),"predicted_usage": predictions.reshape(predictions.shape[0] * predictions.shape[1])[nan_indices]},
+        index=model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:])
 
 
-
-# train_dataset.take(1).as_numpy_iterator().next()[1]
 if __name__ == '__main__':
-    x, x_nan = get_dataset_fully_modified_date("0.05")
-    x_nan.drop(columns=['year', 'winter', 'spring', 'summer', 'fall', 'holiday', 'weekend', 'temperature', 'humidity',
-                        'visibility', 'apparentTemperature', 'pressure', 'windSpeed',
-                        'cloudCover', 'windBearing', 'precipIntensity', 'dewPoint',
-                        'precipProbability'], inplace=True)
-    x.drop(columns=['year', 'winter', 'spring', 'summer', 'fall', 'holiday', 'weekend', 'temperature', 'humidity',
-                    'visibility', 'apparentTemperature', 'pressure', 'windSpeed',
-                    'cloudCover', 'windBearing', 'precipIntensity', 'dewPoint',
-                    'precipProbability'], inplace=True)
-    fill_nan(x,x_nan)
+    from src.utils.Methods import fill_nan as fn
+    from src.utils.Dataset import get_random_user
+
+    main_df = get_dataset_fully_modified_date_auto("0.05")
+    main_df = main_df[main_df.id == 99]
+    main_df.drop(columns=['year', 'winter', 'spring', 'summer', 'fall', 'holiday', 'weekend', 'temperature',
+                          'humidity', 'visibility', 'apparentTemperature', 'pressure', 'windSpeed', 'cloudCover',
+                          'windBearing', 'precipIntensity', 'dewPoint', 'precipProbability'], inplace=True)
+    t = []
+    for i in range(20):
+        filled_users = main_df.groupby("id").apply(fill_nan)
+
+        error, error_df = evaluate_dataframe_two(filled_users, mean_square_error)
+        # print(error)
+        # print(error_df)
+        t.append(error)
+    print(t)
     # print(user)
     # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
     # # filled_users = x_nan.groupby("id").apply(fill_nan)

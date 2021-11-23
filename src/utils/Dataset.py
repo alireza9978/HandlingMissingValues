@@ -18,6 +18,7 @@ def save_error(temp_df: pd.DataFrame, nan_percent: str, method_name: str, measur
     if params is not None:
         method_name += str(params)
     path = root + f"results/errors/error_df_method_{method_name}_nan_{nan_percent}_{measure}.csv"
+    temp_df = temp_df.reset_index()
     temp_df.to_csv(path, index=False)
 
 
