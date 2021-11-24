@@ -11,6 +11,7 @@ from src.utils.Dataset import get_random_user, load_error, get_all_error_dfs, ge
 from src.utils.Methods import method_name_single_feature, method_name_single_feature_param, \
     method_single_feature_param_value
 from src.utils.Methods import measures_name
+from src.preprocessing.load_dataset import root
 
 
 def calculate_feature(temp_df: pd.DataFrame, window_size: int):
@@ -110,7 +111,7 @@ if __name__ == '__main__':
             print('MSE in n_clusters {} is equal to {}'.format(i, result))
             results.append([id, i, result])
     results = pd.DataFrame(results, columns=["id", "n_clusters", "mse"])
-    results.to_csv(Path('h:/Projects/Datasets/Smart/results/clustering_results.csv'), index=False)
+    results.to_csv(Path(root + 'results/clustering_results.csv'), index=False)
         # clf = RandomForestClassifier(n_estimators=32, max_depth=5, min_samples_leaf=4)
         # clf.fit(train_x, train_y)
         # train_prediction = clf.predict(train_x)
