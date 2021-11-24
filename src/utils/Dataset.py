@@ -16,6 +16,16 @@ def get_random_user(x: pd.DataFrame, x_nan: pd.DataFrame) -> (pd.DataFrame, pd.D
     return x, x_nan
 
 
+def get_user_by_id(x: pd.DataFrame, x_nan: pd.DataFrame, id: int) -> (pd.DataFrame, pd.DataFrame):
+    user_ids = x.id.unique()
+    temp_id = id
+    x = x[x.id == temp_id]
+    # x = x.reset_index(drop=True)
+    x_nan = x_nan[x_nan.id == temp_id]
+    # x_nan = x_nan.reset_index(drop=True)
+    return x, x_nan
+
+
 def save_error(temp_df: pd.DataFrame, nan_percent: str, method_name: str, measure: str, params=None):
     if params is not None:
         method_name += str(params)

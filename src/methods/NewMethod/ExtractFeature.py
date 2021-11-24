@@ -1,19 +1,16 @@
 import pandas as pd
-
+import numpy as np
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import OneHotEncoder
+from pathlib import Path
 from sklearn.model_selection import train_test_split
 from src.preprocessing.load_dataset import get_dataset
-from src.utils.Dataset import get_random_user, load_error
+from src.utils.Dataset import get_random_user, load_error, get_all_error_dfs, get_user_by_id
 from src.utils.Methods import method_name_single_feature, method_name_single_feature_param, \
     method_single_feature_param_value
 from src.utils.Methods import measures_name
-import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow import keras
-from tensorflow.keras import layers
 
 
 def calculate_feature(temp_df: pd.DataFrame, window_size: int):
@@ -45,32 +42,18 @@ def calculate_feature(temp_df: pd.DataFrame, window_size: int):
     return result_df
 
 
-def add_methods_result(temp_df: pd.DataFrame):
-    method_columns = []
-    for name in method_name_single_feature:
-        error_df = load_error(nan_percent, name, measures_name[0])
-        temp_columns = error_df.columns.to_list()
-        temp_columns[-1] = name
-        method_columns.append(name)
-        error_df.columns = temp_columns
-        temp_df = temp_df.join(error_df[[name, "index"]].set_index("index"))
-    # for name, params in zip(method_name_single_feature_param, method_single_feature_param_value):
-    #     for param in params:
-    #         error_df = load_error(nan_percent, name, measures_name[0], param)
-    #         temp_columns = error_df.columns.to_list()
-    #         temp_name = name + str(param)
-    #         temp_columns[-1] = temp_name
-    #         method_columns.append(temp_name)
-    #         error_df.columns = temp_columns
-    #         temp_df = temp_df.join(error_df[[temp_name, "index"]].set_index("index"))
-    return temp_df, method_columns
+def add_methods_result(nan_percent):
+    error_df = get_all_error_dfs(nan_percent, measures_name[0])
+    method_columns = error_df.columns
+    return error_df, method_columns
 
 
-def add_label(temp_df: pd.DataFrame, columns_name: list):
-    temp_df["label"] = temp_df[columns_name].to_numpy().argmin(axis=1)
-    temp_df["minimum_error"] = temp_df[columns_name].to_numpy().min(axis=1)
-    temp_error_df = temp_df[columns_name]
-    return temp_df, temp_error_df
+def add_label(temp_df: pd.DataFrame):
+    label = temp_df.to_numpy().argmin(axis=1)
+    minimum_error = temp_df.to_numpy().min(axis=1)
+    temp_df['label'] = label
+    temp_df['minimum_error'] = minimum_error
+    return temp_df
 
 
 def calculate_error(error_df, prediction):
@@ -82,82 +65,63 @@ def calculate_error(error_df, prediction):
     return total / prediction.shape[0]
 
 
-def generate_train_test(feature_df, error_df):
-    x_train = feature_df[train_x_columns]
-    x_train = x_train.dropna()
-    y_train = feature_df["label"][x_train.index]
-    error_df = error_df.loc[x_train.index]
-    x_train, x_test, y_train, y_test, error_df_train, error_df_test = train_test_split(x_train, y_train, error_df,
-                                                                                       test_size=0.3)
+def clustering_aggregation(n_clusters, train_x, train_y, test_x, test_y, train_error_df, test_error_df):
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(train_x)
+    temp = pd.DataFrame({'label': train_y, 'cluster': kmeans.labels_})
 
-    scaler = MinMaxScaler()
-    x_train = scaler.fit_transform(x_train)
-    x_test = scaler.transform(x_test)
+    # vote_results = temp.groupby('cluster').agg(pd.Series.mode)
+    def city(temp_row):
+        un = np.unique(temp_row.label, return_counts=True)
+        return un[0][np.argmax(un[1])]
 
-    return x_train, x_test, y_train, y_test, error_df_train, error_df_test
-
-
-def classification(x_train, x_test, y_train):
-    clf = RandomForestClassifier()
-    clf.fit(x_train, y_train)
-    temp_train_prediction = clf.predict(x_train)
-    temp_y_prediction = clf.predict(x_test)
-    return temp_train_prediction, temp_y_prediction
-
-
-def classification_ann(x_train, x_test, y_train):
-    encoder = OneHotEncoder()
-    y_train = encoder.fit_transform(y_train.to_numpy().reshape(-1, 1)).todense()
-
-    inputs = layers.Input(shape=(x_train.shape[1],))
-    model = layers.Dense(21, activation="relu")(inputs)
-    model = layers.Dropout(0.25)(model)
-    model = layers.Dense(21, activation="relu")(model)
-    model = layers.Dropout(0.25)(model)
-    output = layers.Dense(y_train.shape[1], activation="sigmoid")(model)
-    model = keras.Model(inputs, output)
-    model.compile(optimizer='adam', loss=tf.keras.losses.CategoricalCrossentropy(), metrics=['accuracy'])
-
-    train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(32)
-    model.fit(train_dataset, epochs=100)
-    temp_train_prediction = model.predict(x_train)
-    temp_train_prediction = encoder.inverse_transform(temp_train_prediction).squeeze()
-    temp_test_prediction = model.predict(x_test)
-    temp_test_prediction = encoder.inverse_transform(temp_test_prediction).squeeze()
-
-    return temp_train_prediction, temp_test_prediction
-
-
-def clustering(x_train, x_test, y_train, y_test):
-    clu = KMeans()
-    clu.fit_transform(x_train,)
-    pass
+    vote_results = temp.groupby('cluster').apply(city)
+    # vote_results['label'] = [i[0] if type(i) == np.ndarray else i for i in vote_results.label.to_list()]
+    predictions = kmeans.predict(test_x)
+    predictions = [vote_results.iloc[i] for i in predictions]
+    errors = [test_error_df.iloc[i, predictions[i]] for i in range(len(predictions))]
+    errors = np.array(errors)
+    mse = errors.mean()
+    return mse
 
 
 if __name__ == '__main__':
     nan_percent = "0.1"
     x, x_nan = get_dataset(nan_percent)
-    (x, x_nan) = get_random_user(x, x_nan)
-    moving_features = x_nan.groupby("id").apply(calculate_feature, 12)
-    moving_features = moving_features.reset_index(level=0)
-    train_x_columns = moving_features.columns.copy()
-    moving_features, methods_name = add_methods_result(moving_features)
-    moving_features, usage_error_df = add_label(moving_features, methods_name)
-    method_results = usage_error_df.mean()
+    # (x, x_nan) = get_random_user(x, x_nan)
+    results = []
+    for id in range(1, 114):
+        (t, t_nan) = get_user_by_id(x, x_nan,id)
+        moving_features = t_nan.groupby("id").apply(calculate_feature, 12)
+        moving_features = moving_features.reset_index(level=0).drop(columns=["id"])
+        usage_error_df, methods_name = add_methods_result(nan_percent)
+        usage_error_df = add_label(usage_error_df)
+        method_results = usage_error_df.mean()
 
-    train_x, test_x, train_y, test_y, train_error_df, test_error_df = generate_train_test(moving_features,
-                                                                                          usage_error_df)
-    # train_prediction, y_prediction = clustering(train_x, test_x, train_y, test_y)
-    train_prediction, y_prediction = classification_ann(train_x, test_x, train_y)
+        train_x = moving_features
+        train_x = train_x.dropna()
+        train_y = usage_error_df["label"][train_x.index]
+        usage_error_df = usage_error_df.loc[train_x.index]
+        train_x, test_x, train_y, test_y, train_error_df, test_error_df = train_test_split(train_x, train_y,
+                                                                                           usage_error_df,
+                                                                                           test_size=0.3)
 
-    print("best train mse: ", calculate_error(train_error_df, train_y.to_numpy()))
-    print("best test  mse: ", calculate_error(test_error_df, test_y.to_numpy()))
-
-    print("best mse for single method: ", method_results[method_results.argmin()],
-          method_results.index[method_results.argmin()])
-    print("train: ")
-    print("accuracy: ", accuracy_score(train_y, train_prediction))
-    print("mse: ", calculate_error(train_error_df, train_prediction))
-    print("test: ")
-    print("accuracy: ", accuracy_score(test_y, y_prediction))
-    print("mse: ", calculate_error(test_error_df, y_prediction))
+        for i in range(3, 10):
+            result = clustering_aggregation(i, train_x, train_y, test_x, test_y, train_error_df, test_error_df)
+            print('MSE in n_clusters {} is equal to {}'.format(i, result))
+            results.append([id, i, result])
+    results = pd.DataFrame(results, columns=["id", "n_clusters", "mse"])
+    results.to_csv(Path('h:/Projects/Datasets/Smart/results/clustering_results.csv'), index=False)
+        # clf = RandomForestClassifier(n_estimators=32, max_depth=5, min_samples_leaf=4)
+        # clf.fit(train_x, train_y)
+        # train_prediction = clf.predict(train_x)
+        # y_prediction = clf.predict(test_x)
+        #
+        # print("best mse: ", moving_features["minimum_error"].mean())
+        # print("best mse for single method: ", method_results[method_results.argmin()],
+        #       method_results.index[method_results.argmin()])
+        # print("train: ")
+        # print("accuracy: ", accuracy_score(train_y, train_prediction))
+        # print("mse: ", calculate_error(train_error_df, train_prediction))
+        # print("test: ")
+        # print("accuracy: ", accuracy_score(test_y, y_prediction))
+        # print("mse: ", calculate_error(test_error_df, y_prediction))
