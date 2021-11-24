@@ -1,9 +1,13 @@
-import math
 import pandas as pd
 
+from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
 from src.preprocessing.load_dataset import get_dataset
 from src.utils.Dataset import get_random_user, load_error
-from src.utils.Methods import method_name_single_feature
+from src.utils.Methods import method_name_single_feature, method_name_single_feature_param, \
+    method_single_feature_param_value
 from src.utils.Methods import measures_name
 
 
@@ -36,18 +40,71 @@ def calculate_feature(temp_df: pd.DataFrame, window_size: int):
     return result_df
 
 
-if __name__ == '__main__':
-    nan_percent = "0.05"
-    x, x_nan = get_dataset(nan_percent)
-    (x, x_nan) = get_random_user(x, x_nan)
-    moving_features = x_nan.groupby("id").apply(calculate_feature, 12)
-    moving_features = moving_features.reset_index(level=0)
+def add_methods_result(temp_df: pd.DataFrame):
+    method_columns = []
     for name in method_name_single_feature:
         error_df = load_error(nan_percent, name, measures_name[0])
         temp_columns = error_df.columns.to_list()
         temp_columns[-1] = name
+        method_columns.append(name)
         error_df.columns = temp_columns
-        moving_features = moving_features.join(error_df[[name, "index"]].set_index("index"))
-    print(moving_features)
-    print(moving_features.columns)
-    print(moving_features.isna().sum())
+        temp_df = temp_df.join(error_df[[name, "index"]].set_index("index"))
+    for name, params in zip(method_name_single_feature_param, method_single_feature_param_value):
+        for param in params:
+            error_df = load_error(nan_percent, name, measures_name[0], param)
+            temp_columns = error_df.columns.to_list()
+            temp_name = name + str(param)
+            temp_columns[-1] = temp_name
+            method_columns.append(temp_name)
+            error_df.columns = temp_columns
+            temp_df = temp_df.join(error_df[[temp_name, "index"]].set_index("index"))
+    return temp_df, method_columns
+
+
+def add_label(temp_df: pd.DataFrame, columns_name: list):
+    temp_df["label"] = temp_df[columns_name].to_numpy().argmin(axis=1)
+    temp_df["minimum_error"] = temp_df[columns_name].to_numpy().min(axis=1)
+    temp_error_df = temp_df[columns_name]
+    return temp_df, temp_error_df
+
+
+def calculate_error(error_df, prediction):
+    errors = error_df.to_numpy()
+    total = 0
+    for i in range(prediction.shape[0]):
+        total += errors[i][prediction[i]]
+
+    return total / prediction.shape[0]
+
+
+if __name__ == '__main__':
+    nan_percent = "0.01"
+    x, x_nan = get_dataset(nan_percent)
+    (x, x_nan) = get_random_user(x, x_nan)
+    moving_features = x_nan.groupby("id").apply(calculate_feature, 12)
+    moving_features = moving_features.reset_index(level=0)
+    train_x_columns = moving_features.columns.copy()
+    moving_features, methods_name = add_methods_result(moving_features)
+    moving_features, usage_error_df = add_label(moving_features, methods_name)
+    method_results = usage_error_df.mean()
+
+    train_x = moving_features[train_x_columns]
+    train_x = train_x.dropna()
+    train_y = moving_features["label"][train_x.index]
+    usage_error_df = usage_error_df.loc[train_x.index]
+    train_x, test_x, train_y, test_y, train_error_df, test_error_df = train_test_split(train_x, train_y, usage_error_df,
+                                                                                       test_size=0.3)
+    clf = RandomForestClassifier(n_estimators=32, max_depth=5, min_samples_leaf=4)
+    clf.fit(train_x, train_y)
+    train_prediction = clf.predict(train_x)
+    y_prediction = clf.predict(test_x)
+
+    print("best mse: ", moving_features["minimum_error"].mean())
+    print("best mse for single method: ", method_results[method_results.argmin()],
+          method_results.index[method_results.argmin()])
+    print("train: ")
+    print("accuracy: ", accuracy_score(train_y, train_prediction))
+    print("mse: ", calculate_error(train_error_df, train_prediction))
+    print("test: ")
+    print("accuracy: ", accuracy_score(test_y, y_prediction))
+    print("mse: ", calculate_error(test_error_df, y_prediction))
