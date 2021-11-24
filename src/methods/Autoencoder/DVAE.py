@@ -10,7 +10,7 @@ from src.measurements.Measurements import mean_square_error, evaluate_dataframe_
 from src.preprocessing.load_dataset import get_dataset_fully_modified_date_auto
 
 
-class DAE:
+class DVAE:
 
     def __init__(self, temp_df: pd.DataFrame):
         self.df = temp_df
@@ -27,7 +27,7 @@ class DAE:
         self.test_x = None
         self.test_y = None
         self.df_nan_indexes = None
-        self.scaler = DAE._generate_scaler()
+        self.scaler = DVAE._generate_scaler()
         self.preimputation()
         self.normalize_user_usage()
         self.split_df()
@@ -83,9 +83,40 @@ class DAE:
         self.test_x = result[2]
         self.test_y = result[3]
 
+    @staticmethod
+    def loss_func(encoder_mu, encoder_log_variance):
+        def vae_reconstruction_loss(y_true, y_predict):
+            reconstruction_loss_factor = 1000
+            reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.square(y_true - y_predict),
+                                                        axis=[1])
+            return reconstruction_loss_factor * reconstruction_loss
+
+        def vae_kl_loss(encoder_mu, encoder_log_variance):
+            kl_loss = -0.5 * tf.keras.backend.sum(
+                1.0 + encoder_log_variance - tf.keras.backend.square(encoder_mu) - tf.keras.backend.exp(
+                    encoder_log_variance), axis=1)
+            return kl_loss
+
+        def vae_kl_loss_metric(y_true, y_predict):
+            kl_loss = -0.5 * tf.keras.backend.sum(
+                1.0 + encoder_log_variance - tf.keras.backend.square(encoder_mu) - tf.keras.backend.exp(
+                    encoder_log_variance), axis=1)
+            return kl_loss
+
+        def vae_loss(y_true, y_predict):
+            reconstruction_loss = vae_reconstruction_loss(y_true, y_predict)
+            kl_loss = vae_kl_loss(y_true, y_predict)
+
+            loss = reconstruction_loss + kl_loss
+            return loss
+
+        return vae_loss
+
+
     def train(self):
         train_dataset = tf.data.Dataset.from_tensor_slices((self.train_x, self.train_y)).batch(self.batch_size)
         input_layer = Input(shape=(self.train_x.shape[1], self.train_x.shape[2],))
+
         # input_shape = (batch_size,train.shape[1],train.shape[2])
 
         # Encoder
@@ -93,16 +124,31 @@ class DAE:
         layer1 = tf.keras.layers.LeakyReLU(alpha=0.3)(layer1)
         layer2 = Dense(32)(layer1)
         layer2 = tf.keras.layers.LeakyReLU(alpha=0.3)(layer2)
-        encodings = Dense(16)(layer2)
+        # encodings = Dense(16)(layer2)
+        encoder_mu = Dense(16)(layer2)
+        encoder_log_variance = Dense(16)(layer2)
+        encoder_mu_log_variance_model = tf.keras.models.Model(input_layer, (encoder_mu, encoder_log_variance),
+                                                              name="encoder_mu_log_variance_model")
+
+        def sampling(mu_log_variance):
+            mu, log_variance = mu_log_variance
+            epsilon = tf.keras.backend.random_normal(shape=tf.keras.backend.shape(mu), mean=0.0,
+                                                     stddev=1.0)
+            random_sample = mu + tf.keras.backend.exp(log_variance / 2) * epsilon
+            return random_sample
+
+        encoder_output = tf.keras.layers.Lambda(sampling, name="encoder_output")(
+            [encoder_mu, encoder_log_variance])
         # Decoder
-        layer2_ = Dense(32)(encodings)
+        layer2_ = Dense(32)(encoder_output)
         layer2_ = tf.keras.layers.LeakyReLU(alpha=0.3)(layer2_)
         layer1_ = Conv1DTranspose(64, 3, padding='valid')(layer2_)
         layer1_ = tf.keras.layers.LeakyReLU(alpha=0.3)(layer1_)
         decoded = Conv1D(self.train_x.shape[2], 3, activation="sigmoid", padding="same")(layer1_)
+
         autoencoder = Model(input_layer, decoded)
         # optimizer = tf.optimizers.Adam(clipvalue=0.5)
-        autoencoder.compile(optimizer='adam', loss='mean_squared_error')
+        autoencoder.compile(optimizer=tf.keras.optimizers.Adam(lr=0.001), loss=self.loss_func(encoder_mu, encoder_log_variance))
         print(autoencoder.summary())
         autoencoder.fit(train_dataset, epochs=self.epochs, verbose=2)
         # model.fit(train, consumptions, epochs=150, batch_size=batch_size, verbose=2, shuffle=False)
@@ -114,8 +160,9 @@ class DAE:
         return predictions
 
 
+
 def fill_nan(temp_df: pd.DataFrame):
-    model = DAE(temp_df)
+    model = DVAE(temp_df)
     model.train()
     predictions = model.test()
 
@@ -128,9 +175,11 @@ def fill_nan(temp_df: pd.DataFrame):
     real = model.test_y[:, :, 0]  # usage is in the second column
     real = real.reshape(real.shape[0] * real.shape[1])
     real = model.scaler.inverse_transform(real.reshape(-1, 1))
-    # print(real)
+    print(real)
     return pd.DataFrame(
-        {'usage': temp_df.loc[model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:]]['usage'].to_numpy(),"predicted_usage": predictions.reshape(predictions.shape[0] * predictions.shape[1])[nan_indices]},
+        {'usage': temp_df.loc[model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:]][
+            'usage'].to_numpy(),
+         "predicted_usage": predictions.reshape(predictions.shape[0] * predictions.shape[1])[nan_indices]},
         index=model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:])
 
 
@@ -148,8 +197,8 @@ if __name__ == '__main__':
     filled_users = main_df.groupby("id").apply(fill_nan)
 
     error, error_df = evaluate_dataframe_two(filled_users, mean_square_error)
-        # print(error)
-        # print(error_df)
+    # print(error)
+    # print(error_df)
     t.append(error)
     print(t)
     # print(user)
