@@ -41,7 +41,7 @@ def load_error(nan_percent: str, method_name: str, measure: str, params=None):
     return pd.read_csv(path)
 
 
-def get_all_error_dfs(nan_percent, measure_name):
+def get_all_error_dfs(nan_percent, measure_name, column_name="error"):
     methods_name = []
     method_df = []
     error_df = pd.DataFrame()
@@ -53,7 +53,7 @@ def get_all_error_dfs(nan_percent, measure_name):
         best_error = None
         for param in params:
             temp_error_df = load_error(nan_percent, name, measure_name, param)
-            temp_error = temp_error_df["error"].mean()
+            temp_error = temp_error_df[column_name].mean()
             if best_df is None:
                 best_df = temp_error_df
                 best_error = temp_error
@@ -65,6 +65,6 @@ def get_all_error_dfs(nan_percent, measure_name):
         methods_name.append(name)
 
     for name, temp_df in zip(methods_name, method_df):
-        error_df[name] = temp_df.set_index("index")["error"]
+        error_df[name] = temp_df.set_index("index")[column_name]
 
-    return error_df.dropna()
+    return error_df
