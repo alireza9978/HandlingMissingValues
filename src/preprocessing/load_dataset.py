@@ -22,6 +22,21 @@ def get_train_test_fully_modified_date(nan_percent: str, test_percent: float):
     return train_df, test_df, train_nan_df, test_nan_df
 
 
+def get_train_test_dataset(nan_percent: str, test_percent: float):
+    file_name = "smart_star_hourly"
+    train_df = pd.read_csv(Path(root + "datasets/train_test/{}_train_{}.csv".format(file_name, test_percent)))
+    test_df = pd.read_csv(Path(root + "datasets/train_test/{}_test_{}.csv".format(file_name, test_percent)))
+    train_nan_df = pd.read_csv(
+        Path(root + "datasets/train_test/with_nan/{}_train_{}_nan_{}.csv".format(file_name, test_percent, nan_percent)))
+    test_nan_df = pd.read_csv(
+        Path(root + "datasets/train_test/with_nan/{}_test_{}_nan_{}.csv".format(file_name, test_percent, nan_percent)))
+    train_df.date = pd.to_datetime(train_df.date)
+    test_df.date = pd.to_datetime(test_df.date)
+    train_nan_df.date = pd.to_datetime(train_nan_df.date)
+    test_nan_df.date = pd.to_datetime(test_nan_df.date)
+    return train_df, test_df, train_nan_df, test_nan_df
+
+
 def get_dataset(nan_percent: str):
     main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_{nan_percent}.csv"))
     main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
@@ -57,6 +72,16 @@ def get_dataset_irish():
 def get_dataset_fully_modified_date_auto(nan_percent: str):
     main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_fully_modified_{nan_percent}.csv"))
     main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly_fully_modified.csv"))
+    main_df_with_nan["real_usage"] = main_df["usage"]
+    return main_df_with_nan
+
+
+def get_dataset_auto(nan_percent: str):
+    main_df_with_nan = pd.read_csv(Path(root + f"datasets/with_nan/smart_star_hourly_{nan_percent}.csv"))
+    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
+
+    main_df.date = pd.to_datetime(main_df.date)
+    main_df_with_nan.date = pd.to_datetime(main_df_with_nan.date)
     main_df_with_nan["real_usage"] = main_df["usage"]
     return main_df_with_nan
 

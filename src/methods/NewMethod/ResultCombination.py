@@ -44,7 +44,7 @@ def get_data_set(user_id):
 
 if __name__ == '__main__':
     results_df = pd.DataFrame()
-    for i in range(1, 5):
+    for i in range(1, 115):
         train_x, test_x, train_y, test_y, x_scaler, y_scaler, results_dict = get_data_set(i)
 
         reg = SVR(kernel="linear")
