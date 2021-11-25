@@ -7,8 +7,8 @@ from src.preprocessing.convert_timestamps import convert_date
 
 # root = "E:/HandlingMissingValues/"
 # root = "/home/alireza/projects/python/HandlingMissingValues/"
-root = "/home/ippbx/PycharmProjects/HandlingMissingValues/"
-# root = 'h:/Projects/Datasets/Smart/'
+# root = "/home/ippbx/PycharmProjects/HandlingMissingValues/"
+root = 'h:/Projects/Datasets/Smart/'
 
 
 def get_train_test_fully_modified_date(nan_percent: str, test_percent: float):
