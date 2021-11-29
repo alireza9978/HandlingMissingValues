@@ -111,7 +111,7 @@ if __name__ == '__main__':
             print('MSE in n_clusters {} is equal to {}'.format(i, result))
             results.append([id, i, result])
     results = pd.DataFrame(results, columns=["id", "n_clusters", "mse"])
-    results.to_csv(Path(root + 'results/clustering_results.csv'), index=False)
+    results.to_csv(Path(root + 'results/clustering_results_{}.csv'.format(nan_percent)), index=False)
         # clf = RandomForestClassifier(n_estimators=32, max_depth=5, min_samples_leaf=4)
         # clf.fit(train_x, train_y)
         # train_prediction = clf.predict(train_x)

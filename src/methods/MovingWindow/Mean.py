@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from src.measurements.Measurements import evaluate_dataframe, mean_square_error, evaluate_dataframe_two
+from src.measurements.Measurements import mean_square_error, evaluate_dataframe_two
 from src.preprocessing.load_dataset import get_dataset
-from src.utils.parallelizem import apply_parallel
 
 
 def get_name():

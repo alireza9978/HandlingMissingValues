@@ -2,11 +2,13 @@ import importlib
 
 from src.measurements.Measurements import *
 
-from src.methods.Simple import FirstObservationCarriedBackward, TotalMedian, LastObservationCarriedForward, \
-    Interpolation, TotalMean
+from src.methods.Simple import FirstObservationCarriedBackward, LastObservationCarriedForward, \
+    Interpolation
+from src.methods.Simple.TotalMean import TotalMean
+from src.methods.Simple.TotalMedian import TotalMedian
 from src.methods.MovingWindow import Mean, WeightedMean, ExponentialMean
-from src.methods.ARIMA import ARIMA
-from src.methods.SVR import SVR
+from src.methods.ARIMA.ARIMA import Arima
+from src.methods.SVR.SVR import Svr
 from src.preprocessing.insert_nan import nan_percents_str
 from src.preprocessing.load_dataset import get_dataset, get_dataset_fully_modified_date
 from src.preprocessing.load_dataset import root as root_path
@@ -14,6 +16,27 @@ from src.utils.parallelizem import apply_parallel
 
 measures = [mean_square_error, mean_absolute_error, mean_absolute_percentage_error]
 measures_name = ["mse", "mae", "mape"]
+
+methods_trainable = [
+    TotalMean,
+    TotalMedian,
+    Arima,
+    Svr
+]
+
+methods_trainable_name = [
+    TotalMean.get_name(),
+    TotalMedian.get_name(),
+    Arima.get_name(),
+    Svr.get_name(),
+]
+
+methods_trainable_params = [
+    TotalMean.get_train_params(),
+    TotalMedian.get_train_params(),
+    Arima.get_train_params(),
+    Svr.get_train_params(),
+]
 
 methods_single_feature = [
     TotalMean.fill_nan,
