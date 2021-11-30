@@ -2,10 +2,8 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVR
 
-from src.measurements.Measurements import mean_square_error, evaluate_dataframe_two
 from src.methods.BaseModel.Base import Base
 from src.preprocessing.load_dataset import get_train_test_fully_modified_date
-from src.utils.parallelizem import apply_parallel_two, apply_parallel
 
 
 class Svr(Base):
@@ -17,7 +15,7 @@ class Svr(Base):
 
     @staticmethod
     def get_train_params():
-        return [(1000.0, 0.15)]
+        return [(1000.0, 2), (1000.0, 3), (1000.0, 5), (1000.0, 7), (1000.0, 9)]
 
     @staticmethod
     def get_name():
@@ -25,7 +23,7 @@ class Svr(Base):
 
     @staticmethod
     def fill_nan(temp_df: pd.DataFrame, train_param):
-        c, epsilon = train_param
+        c, degree = train_param
 
         user_id = temp_df["id"].values[0]
         temp_df = temp_df.drop(columns=["id"])
@@ -34,7 +32,7 @@ class Svr(Base):
         nan_row = temp_df[temp_df["usage"].isna()]
         nan_index = nan_row.index.to_numpy()
         non_nan_rows = temp_df.drop(index=nan_index)
-        svr_model = SVR(C=c, epsilon=epsilon, kernel='rbf', gamma='scale', degree=5)
+        svr_model = SVR(C=c, epsilon=0.15, kernel='rbf', gamma='scale', degree=degree)
         svr_model.fit(non_nan_rows.drop(columns=['usage']), non_nan_rows['usage'])
         usage = svr_model.predict(nan_row.drop(columns=['usage'])).reshape(-1, 1)
         return pd.DataFrame({"predicted_usage": usage.squeeze()},
