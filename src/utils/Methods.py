@@ -1,10 +1,9 @@
 from src.measurements.Measurements import *
-
 from src.methods.ARIMA.ARIMA import Arima
-from src.methods.MovingWindow import ExponentialMean
+from src.methods.MovingWindow.ExponentialMean import ExponentialMean
+from src.methods.MovingWindow.MovingMean import MovingMean
+from src.methods.MovingWindow.WeightedMean import WeightedMean
 from src.methods.SVR.SVR import Svr
-from src.methods.Simple import FirstObservationCarriedBackward, LastObservationCarriedForward, \
-    Interpolation
 from src.methods.Simple.TotalMean import TotalMean
 from src.methods.Simple.TotalMedian import TotalMedian
 from src.utils.parallelizem import apply_parallel
@@ -15,72 +14,12 @@ measures_name = ["mse", "mae", "mape"]
 methods_trainable = [
     TotalMean,
     TotalMedian,
+    WeightedMean,
+    MovingMean,
+    ExponentialMean,
     Arima,
-    Svr
+    Svr,
 ]
-
-methods_trainable_name = [
-    TotalMean.get_name(),
-    TotalMedian.get_name(),
-    Arima.get_name(),
-    Svr.get_name(),
-]
-
-methods_trainable_params = [
-    TotalMean.get_train_params(),
-    # TotalMedian.get_train_params(),
-    Arima.get_train_params(),
-    Svr.get_train_params(),
-]
-
-methods_single_feature = [
-    TotalMean.fill_nan,
-    TotalMedian.fill_nan,
-    FirstObservationCarriedBackward.fill_nan,
-    LastObservationCarriedForward.fill_nan,
-    Interpolation.fill_nan,
-    # ARIMA.fill_nan
-]
-
-method_name_single_feature = [
-    TotalMean.get_name(),
-    TotalMedian.get_name(),
-    FirstObservationCarriedBackward.get_name(),
-    LastObservationCarriedForward.get_name(),
-    Interpolation.get_name(),
-    # ARIMA.get_name()
-]
-
-#
-method_single_feature_param = [
-]
-
-method_name_single_feature_param = [
-]
-
-method_single_feature_param_value = [
-]
-
-methods_multiple_feature = [
-    # SVR.fill_nan
-]
-
-method_name_multiple_feature = [
-    # SVR.get_name(),
-]
-
-
-#
-# methods_multiple_feature_multi_params = [
-#     importlib.import_module("KNN.KNNImputer")]
-#
-# methods_name_multiple_feature_multi_params = [
-#     "KNN Imputer"]
-
-
-# methods_complete_feature = [importlib.import_module("Regression.EveryDayLinear"), ]
-#
-# method_name_complete_feature = ["Regression Every Day", ]
 
 
 def fill_nan(temp_x: pd.DataFrame, temp_x_nan: pd.DataFrame, fill_nan_method, params=None) -> pd.DataFrame:
