@@ -3,7 +3,7 @@ from abc import abstractmethod, ABC
 import pandas as pd
 
 from src.measurements.Measurements import evaluate_dataframe_two
-from src.utils.parallelizem import apply_parallel_two
+from src.utils.parallelizem import apply_parallel_two, apply_parallel
 
 
 class Base(ABC):
@@ -61,8 +61,7 @@ class Base(ABC):
         self.test_errors = pd.DataFrame()
 
         for train_param in train_params:
-            temp_test_result = self.test_nan_df.groupby("id").apply(method, (self, train_param))
-            temp_test_result = temp_test_result.reset_index().set_index("level_1")
+            temp_test_result = apply_parallel(self.test_nan_df.groupby("id"), method, (self, train_param))
             temp_test_result = temp_test_result.join(self.test_df[["usage"]])
             temp_result_list = [str(train_param)]
             for measure, measure_name in zip(measures, measures_name):
