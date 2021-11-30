@@ -1,7 +1,7 @@
 from src.measurements.Measurements import *
 
 from src.methods.ARIMA.ARIMA import Arima
-from src.methods.MovingWindow import Mean, WeightedMean, ExponentialMean
+from src.methods.MovingWindow import ExponentialMean
 from src.methods.SVR.SVR import Svr
 from src.methods.Simple import FirstObservationCarriedBackward, LastObservationCarriedForward, \
     Interpolation
@@ -53,21 +53,12 @@ method_name_single_feature = [
 
 #
 method_single_feature_param = [
-    Mean.fill_nan,
-    WeightedMean.fill_nan,
-    ExponentialMean.fill_nan,
 ]
 
 method_name_single_feature_param = [
-    Mean.get_name(),
-    WeightedMean.get_name(),
-    ExponentialMean.get_name(),
 ]
 
 method_single_feature_param_value = [
-    Mean.get_params(),
-    WeightedMean.get_params(),
-    ExponentialMean.get_params(),
 ]
 
 methods_multiple_feature = [

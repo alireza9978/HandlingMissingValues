@@ -43,8 +43,11 @@ def load_error(nan_percent: str, method_name: str, measure: str, params=None):
     return pd.read_csv(path)
 
 
-def save_error_two(temp_df: pd.DataFrame, nan_percent: str, method_name: str, measure_params):
-    path = root + f"results/errors/error_df_method_{method_name}_nan_{nan_percent}_{measure_params}.csv"
+def save_error_two(temp_df: pd.DataFrame, nan_percent: str, method_name: str, measure_params, train: bool = True):
+    prefix = "train"
+    if not train:
+        prefix = "test"
+    path = root + f"results/errors/{prefix}_error_df_method_{method_name}_nan_{nan_percent}_{measure_params}.csv"
     temp_df = temp_df.reset_index()
     temp_df.to_csv(Path(path), index=False)
 
