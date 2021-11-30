@@ -5,12 +5,12 @@ from src.methods.BaseModel.Base import Base
 from src.preprocessing.load_dataset import get_train_test_dataset
 
 
-class Mean(Base):
+class MovingMean(Base):
 
     def train_test_save(self, nan_percent_value):
-        super().train(Mean.get_train_params(), Mean.fill_nan)
-        super().test(Mean.get_train_params(), Mean.fill_nan_test)
-        super().save_result(Mean.get_name(), nan_percent_value)
+        super().train(MovingMean.get_train_params(), MovingMean.fill_nan)
+        super().test(MovingMean.get_train_params(), MovingMean.fill_nan_test)
+        super().save_result(MovingMean.get_name(), nan_percent_value)
 
     @staticmethod
     def get_name():
@@ -53,11 +53,11 @@ class Mean(Base):
     @staticmethod
     def fill_nan_test(temp_df, other_input):
         _, train_param = other_input
-        result, _, _ = Mean.fill_nan(temp_df, train_param)
+        result, _, _ = MovingMean.fill_nan(temp_df, train_param)
         return result
 
 
 if __name__ == '__main__':
     nan_percent = "0.01"
-    model = Mean(get_train_test_dataset(nan_percent, 0.3))
+    model = MovingMean(get_train_test_dataset(nan_percent, 0.3))
     model.train_test_save(nan_percent)
