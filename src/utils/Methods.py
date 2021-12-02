@@ -3,6 +3,9 @@ from src.methods.ARIMA.ARIMA import Arima
 from src.methods.MovingWindow.ExponentialMean import ExponentialMean
 from src.methods.MovingWindow.MovingMean import MovingMean
 from src.methods.MovingWindow.WeightedMean import WeightedMean
+from src.methods.Simple.Interpolation import Interpolation
+from src.methods.Simple.FirstObservationCarriedBackward import FirstObservationCarriedBackward
+from src.methods.Simple.LastObservationCarriedForward import LastObservationCarriedForward
 from src.methods.SVR.SVR import Svr
 from src.methods.Simple.TotalMean import TotalMean
 from src.methods.Simple.TotalMedian import TotalMedian
@@ -14,6 +17,9 @@ measures_name = ["mse", "mae", "mape"]
 methods_trainable = [
     TotalMean,
     TotalMedian,
+    Interpolation,
+    FirstObservationCarriedBackward,
+    LastObservationCarriedForward,
     WeightedMean,
     MovingMean,
     ExponentialMean,

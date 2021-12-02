@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from src.measurements.Measurements import *
 from src.methods.ARIMA import ARIMA
-from src.methods.MovingWindow import Mean
+from src.methods.MovingWindow import MovingMean
 from src.methods.Simple import Interpolation
 from src.preprocessing.load_dataset import get_dataset
 from src.preprocessing.load_dataset import root
