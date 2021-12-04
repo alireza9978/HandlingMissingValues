@@ -27,14 +27,18 @@ class Svr(Base):
 
         user_id = temp_df["id"].values[0]
         temp_df = temp_df.drop(columns=["id"])
-        scaler = MinMaxScaler()
 
-        nan_row = temp_df[temp_df["usage"].isna()]
+        nan_row = temp_df[temp_df["usage"].isna()].drop(columns=['usage'])
         nan_index = nan_row.index.to_numpy()
         non_nan_rows = temp_df.drop(index=nan_index)
+
+        scaler = MinMaxScaler()
+        x_train = scaler.fit_transform(non_nan_rows.drop(columns=['usage']))
+        x_test = scaler.transform(nan_row)
+
         svr_model = SVR(C=c, epsilon=0.15, kernel='rbf', gamma='scale', degree=degree)
-        svr_model.fit(non_nan_rows.drop(columns=['usage']), non_nan_rows['usage'])
-        usage = svr_model.predict(nan_row.drop(columns=['usage'])).reshape(-1, 1)
+        svr_model.fit(x_train, non_nan_rows['usage'])
+        usage = svr_model.predict(x_test)
         return pd.DataFrame({"predicted_usage": usage.squeeze()},
                             index=nan_index.squeeze()), user_id, (scaler, svr_model)
 
@@ -43,11 +47,14 @@ class Svr(Base):
         self, train_param = other_input
         user_id = temp_df["id"].values[0]
         temp_df = temp_df.drop(columns=["id"])
-        scaler, svr_model = self.params[str(train_param)][user_id]
-
-        nan_row = temp_df[temp_df["usage"].isna()]
+        nan_row = temp_df[temp_df["usage"].isna()].drop(columns=['usage'])
         nan_index = nan_row.index.to_numpy()
-        usage = svr_model.predict(nan_row.drop(columns=['usage'])).reshape(-1, 1)
+
+        scaler, svr_model = self.params[str(train_param)][user_id]
+        x_test = scaler.transform(nan_row)
+
+        usage = svr_model.predict(x_test)
+
         return pd.DataFrame({"predicted_usage": usage.squeeze()}, index=nan_index.squeeze())
 
 
