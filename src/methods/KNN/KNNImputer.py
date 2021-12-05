@@ -15,12 +15,6 @@ class Knn(Base):
         super().save_result(Knn.get_name(), nan_percent_value)
 
     @staticmethod
-    def normalize_user_usage(user):
-        scaler = MinMaxScaler()
-        user['usage'] = scaler.fit_transform(user['usage'].to_numpy().reshape(-1, 1))
-        return user, scaler
-
-    @staticmethod
     def fill_nan(temp_df: pd.DataFrame, n_neighbors):
         user_id = temp_df["id"].values[0]
         temp_df = temp_df.drop(columns=["id"])

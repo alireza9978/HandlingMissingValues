@@ -2,45 +2,71 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import euclidean_distances
-from src.utils.Dataset import get_random_user
-from src.measurements.Measurements import evaluate_dataframe, mean_square_error
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date
-from src.utils.parallelizem import apply_parallel
+from sklearn.preprocessing import MinMaxScaler
+
+from src.methods.BaseModel.Base import Base
+from src.preprocessing.load_dataset import get_train_test_fully_modified_date
 
 
-def fill_nan(temp_array: np.ndarray):
-    import swifter
-    a = swifter.config
+class LinearRegressionImputer(Base):
 
-    nan_row = temp_array[temp_array["usage"].isna()]
-    temp_nan_index = nan_row.index.to_numpy()
-    complete_row = temp_array[~temp_array["usage"].isna()]
-    all_calculated_distances = euclidean_distances(complete_row.drop(columns=["id", "usage"]).to_numpy(),
-                                                   nan_row.drop(columns=["id", "usage"]).to_numpy())
+    def train_test_save(self, nan_percent_value):
+        super().train(LinearRegressionImputer.get_train_params(), LinearRegressionImputer.fill_nan)
+        super().test(LinearRegression.get_train_params(), LinearRegression.fill_nan_test)
+        # super().save_result(LinearRegression.get_name(), nan_percent_value)
 
-    def get_nearest_usage(row: pd.Series):
-        temp_row = row.drop(["id", "usage"]).to_numpy()
+    @staticmethod
+    def get_train_params():
+        return [4, 8, 12, 24]
 
-        calculated_distances = all_calculated_distances[:, row.name]
-        temp_dict = {"distance": calculated_distances.squeeze(), "usage": complete_row.usage}
-        calculated_distances = pd.DataFrame(temp_dict)
-        calculated_distances = calculated_distances.sort_values(by="distance")
-        selected_data_points = complete_row.loc[calculated_distances[:100].index]
+    @staticmethod
+    def get_name():
+        return "linear_regression"
 
-        x_train = selected_data_points.drop(columns=["id", "usage"]).to_numpy()
-        y_train = selected_data_points.usage.to_numpy().reshape(-1, 1)
-        reg = LinearRegression()
-        reg = reg.fit(x_train, y_train)
-        return reg.predict(temp_row.reshape(1, -1))[0][0]
+    @staticmethod
+    def fill_nan(temp_df: pd.DataFrame, data_points_count):
+        user_id = temp_df["id"].values[0]
+        temp_df = temp_df.drop(columns=["id"])
 
-    filled_nan = nan_row.swifter.apply(get_nearest_usage, axis=1)
-    return pd.Series([filled_nan.to_numpy().reshape(-1, 1), temp_nan_index])
+        # getting the nan indexes
+        nan_row = temp_df[temp_df["usage"].isna()]
+        nan_index = nan_row.index.to_numpy()
+        non_nan_rows = temp_df.drop(index=nan_index)
+
+        x_train = non_nan_rows.drop(columns=["usage"]).to_numpy()
+        y_train = non_nan_rows["usage"].to_numpy().reshape(-1, 1)
+        x_test = nan_row.drop(columns=["usage"]).to_numpy()
+
+        # scale input values
+        scaler = MinMaxScaler()
+        x_train = scaler.fit_transform(x_train)
+        x_test = scaler.transform(x_test)
+        y_scaler = MinMaxScaler()
+        y_train = y_scaler.fit_transform(y_train)
+
+        all_calculated_distances = euclidean_distances(x_test, x_train)
+        nearest_usage_indexes = np.argsort(all_calculated_distances)[:, :data_points_count]
+        x_train = x_train[nearest_usage_indexes]
+        y_train = y_train[nearest_usage_indexes]
+
+        result = []
+        for x, y, test_x in zip(x_train, y_train, x_test):
+            reg = LinearRegression()
+            reg = reg.fit(x, y)
+            result.append(reg.predict(test_x.reshape(1, test_x.shape[0])).squeeze())
+
+        result = np.array(result).reshape(-1, 1)
+        result = y_scaler.inverse_transform(result)
+        return pd.DataFrame({"predicted_usage": result}, index=nan_index.squeeze()), user_id, None
+
+    @staticmethod
+    def fill_nan_test(temp_df, other_input):
+        _, train_param = other_input
+        result, _, _ = LinearRegressionImputer.fill_nan(temp_df, train_param)
+        return result
 
 
 if __name__ == '__main__':
-    x, x_nan = get_dataset_fully_modified_date("0.1")
-    x, x_nan = get_random_user(x, x_nan)
-    # filled_users = apply_parallel(x_nan.groupby("id"), fill_nan)
-    filled_users = x_nan.groupby("id").apply(fill_nan)
-    filled_users[2] = filled_users[1].apply(lambda idx: x.loc[idx])
-    print(evaluate_dataframe(filled_users, mean_square_error))
+    nan_percent = "0.01"
+    model = LinearRegressionImputer(get_train_test_fully_modified_date(nan_percent, 0.3))
+    model.train_test_save(nan_percent)
