@@ -12,8 +12,8 @@ class LinearRegressionImputer(Base):
 
     def train_test_save(self, nan_percent_value):
         super().train(LinearRegressionImputer.get_train_params(), LinearRegressionImputer.fill_nan)
-        super().test(LinearRegression.get_train_params(), LinearRegression.fill_nan_test)
-        # super().save_result(LinearRegression.get_name(), nan_percent_value)
+        super().test(LinearRegressionImputer.get_train_params(), LinearRegressionImputer.fill_nan_test)
+        super().save_result(LinearRegressionImputer.get_name(), nan_percent_value)
 
     @staticmethod
     def get_train_params():
@@ -57,7 +57,7 @@ class LinearRegressionImputer(Base):
 
         result = np.array(result).reshape(-1, 1)
         result = y_scaler.inverse_transform(result)
-        return pd.DataFrame({"predicted_usage": result}, index=nan_index.squeeze()), user_id, None
+        return pd.DataFrame({"predicted_usage": result.squeeze()}, index=nan_index.squeeze()), user_id, None
 
     @staticmethod
     def fill_nan_test(temp_df, other_input):
