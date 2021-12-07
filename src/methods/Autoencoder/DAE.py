@@ -90,22 +90,22 @@ class DAE:
 
         # Encoder
         layer1 = Conv1D(64, 2, padding='same', name='layer1-conv1d')(input_layer)
-        layer1 = tf.keras.layers.LeakyReLU(alpha=0.3,name='layer1-relu')(layer1)
+        layer1 = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer1-relu')(layer1)
         # layer2 = Dense(32)(layer1)
-        layer2 = Conv1D(64,2, padding='same',name='layer2-conv1d')(layer1)
-        layer2 = tf.keras.layers.LeakyReLU(alpha=0.3,name='layer2-relu')(layer2)
-        layer3 = Conv1D(64, 2, padding='same',name='layer3-conv1d')(layer2)
-        layer3 = tf.keras.layers.LeakyReLU(alpha=0.3,name='layer3-relu')(layer3)
-        encodings = Dense(16,name='encodings')(layer3)
+        layer2 = Conv1D(64, 2, padding='same', name='layer2-conv1d')(layer1)
+        layer2 = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer2-relu')(layer2)
+        layer3 = Conv1D(64, 2, padding='same', name='layer3-conv1d')(layer2)
+        layer3 = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer3-relu')(layer3)
+        encodings = Dense(16, name='encodings')(layer3)
         # Decoder
         # layer2_ = Dense(32)(encodings)
-        layer3_ = Conv1DTranspose(64, 2, padding='same',name='layer3-conv1dTranspose')(encodings)
-        layer3_ = tf.keras.layers.LeakyReLU(alpha=0.3,name='layer3-reluT')(layer3_)
-        layer2_ = Conv1DTranspose(32, 2, padding='same',name='layer2-conv1dTranspose')(layer3_)
-        layer2_ = tf.keras.layers.LeakyReLU(alpha=0.3,name='layer2-reluT')(layer2_)
-        layer1_ = Conv1DTranspose(1, 2, padding='same',name='layer1-conv1dTranspose')(layer2_)
-        layer1_ = tf.keras.layers.LeakyReLU(alpha=0.3,name='layer1-reluT')(layer1_)
-        decoded = Conv1D(self.train_x.shape[2], 3, activation="sigmoid", padding="same",name='decodings')(layer1_)
+        layer3_ = Conv1DTranspose(64, 2, padding='same', name='layer3-conv1dTranspose')(encodings)
+        layer3_ = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer3-reluT')(layer3_)
+        layer2_ = Conv1DTranspose(32, 2, padding='same', name='layer2-conv1dTranspose')(layer3_)
+        layer2_ = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer2-reluT')(layer2_)
+        layer1_ = Conv1DTranspose(1, 2, padding='same', name='layer1-conv1dTranspose')(layer2_)
+        layer1_ = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer1-reluT')(layer1_)
+        decoded = Conv1D(self.train_x.shape[2], 3, activation="sigmoid", padding="same", name='decodings')(layer1_)
         autoencoder = Model(input_layer, decoded)
         # optimizer = tf.optimizers.Adam(clipvalue=0.5)
         autoencoder.compile(optimizer='adam', loss='mean_squared_error')
@@ -136,14 +136,13 @@ def fill_nan(temp_df: pd.DataFrame):
     real = model.scaler.inverse_transform(real.reshape(-1, 1))
     # print(real)
     return pd.DataFrame(
-        {'usage': temp_df.loc[model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:]]['usage'].to_numpy(),"predicted_usage": predictions.reshape(predictions.shape[0] * predictions.shape[1])[nan_indices]},
+        {'usage': temp_df.loc[model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:]][
+            'usage'].to_numpy(),
+         "predicted_usage": predictions.reshape(predictions.shape[0] * predictions.shape[1])[nan_indices]},
         index=model.df_nan_indexes.to_numpy().squeeze()[-1 * nan_indices.shape[0]:])
 
 
 if __name__ == '__main__':
-    from src.utils.Methods import fill_nan as fn
-    from src.utils.Dataset import get_random_user
-
     main_df = get_dataset_fully_modified_date_auto("0.05")
     main_df = main_df[main_df.id == 99]
     main_df.drop(columns=['year', 'winter', 'spring', 'summer', 'fall', 'holiday', 'weekend', 'temperature',
@@ -154,8 +153,8 @@ if __name__ == '__main__':
     filled_users = main_df.groupby("id").apply(fill_nan)
 
     error, error_df = evaluate_dataframe_two(filled_users, mean_square_error)
-        # print(error)
-        # print(error_df)
+    # print(error)
+    # print(error_df)
     t.append(error)
     print(t)
     # print(user)
