@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 
 from src.preprocessing.load_dataset import root
+
+
 # from src.utils.Methods import method_name_single_feature, method_name_single_feature_param, \
 #     method_single_feature_param_value
 
@@ -51,7 +53,16 @@ def save_error_two(temp_df: pd.DataFrame, nan_percent: str, method_name: str, me
     temp_df = temp_df.reset_index()
     temp_df.to_csv(Path(path), index=False)
 
-#
+
+def load_error_two(nan_percent: str, method_name: str, measure_params, train: bool = True):
+    prefix = "train"
+    if not train:
+        prefix = "test"
+    path = root + f"results/errors/{prefix}_error_df_method_{method_name}_nan_{nan_percent}_{measure_params}.csv"
+    temp_df = pd.read_csv(Path(path), index_col="index")
+    return temp_df
+
+
 # def get_all_error_dfs(nan_percent, measure_name, column_name="error"):
 #     methods_name = []
 #     method_df = []

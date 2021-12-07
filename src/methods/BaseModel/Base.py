@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 import pandas as pd
 
 from src.measurements.Measurements import evaluate_dataframe_two
+from src.utils.Dataset import load_error_two
 from src.utils.parallelizem import apply_parallel_two, apply_parallel
 
 
@@ -89,3 +90,22 @@ class Base(ABC):
         self.test_errors.to_csv(root + f"results/methods/test_result_{name}_{nan_percent}.csv", index=False)
         self.train_errors.columns = temp_columns
         self.train_errors.to_csv(root + f"results/methods/train_result_{name}_{nan_percent}.csv", index=False)
+
+    @staticmethod
+    def load_errors(name, nan_percent):
+        from src.preprocessing.load_dataset import root
+        test_result = pd.read_csv(root + f"results/methods/test_result_{name}_{nan_percent}.csv")
+        train_result = pd.read_csv(root + f"results/methods/train_result_{name}_{nan_percent}.csv")
+        return train_result, test_result
+
+    @staticmethod
+    def load_error_dfs(name, nan_percent, measure_name, train_params):
+        final_train = pd.DataFrame()
+        final_test = pd.DataFrame()
+        for train_param in train_params:
+            measure_param = str(train_param) + "_" + str(measure_name)
+            train_error = load_error_two(nan_percent, name, measure_param, train=True)
+            test_error = load_error_two(nan_percent, name, measure_param, train=False)
+            final_train[f"{name}_{train_param}"] = train_error["predicted_usage"]
+            final_test[f"{name}_{train_param}"] = test_error["predicted_usage"]
+        return final_train, final_test
