@@ -39,43 +39,54 @@ def calculate_feature(temp_df: pd.DataFrame, window_size: int):
     return result_df
 
 
-def data_preparation(train_x):
+def data_preparation(train_x, columns):
     train = train_x.copy()
-    for column in train.columns:
+    for column in columns:
         scaler = MinMaxScaler()
         train[column] = scaler.fit_transform(train[column].to_numpy().reshape(-1, 1))
     train = train.to_numpy().reshape(train.shape[0], 1, train.shape[1])
     return train
 
 
-def preimputation():
-    pass
+def preimputation(train_x, column):
+    train_x[column] = train_x[column].fillna(method='bfill').fillna(method='ffill')
+    return train_x
+
+
+def create_neighborhood(train, window_size):
+    new_dataset = []
+    for i in range(window_size, train.shape[0] - window_size):
+        new_dataset.append(train[i - window_size:i + window_size + 1])
+    return np.array(new_dataset)
 
 
 def feature_extractor(train_x, mode):
     batch_size = 32
-    epochs = 100
-    train_dataset = tf.data.Dataset.from_tensor_slices((train_x, train_x)).batch(batch_size)
+    epochs = 150
+    # train_dataset = tf.data.Dataset.from_tensor_slices((train_x, train_x)).batch(batch_size)
     input_layer = Input(shape=(train_x.shape[1], train_x.shape[2]))
 
     # Encoder
     if mode == 1:
         layer1 = Dense(16)(input_layer)
     elif mode == 2:
-        layer1 = Conv1D(16, 3, padding='valid')(input_layer)
+        layer1 = Conv1D(16, 3, padding='same')(input_layer)
     elif mode == 3:
         layer1 = Conv1D(16, 3, padding='valid')(input_layer)
     layer1 = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer1-relu')(layer1)
     layer2 = Dense(8)(layer1)
     layer2 = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer2-relu')(layer2)
+    layer2 = tf.keras.layers.Dropout(0.2)(layer2)
     encodings = Dense(5, name='encodings')(layer2)
     # Decoder
+
     layer2_ = Dense(8)(encodings)
     layer2_ = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer2-reluT')(layer2_)
+    layer2_ = tf.keras.layers.Dropout(0.2)(layer2_)
     if mode == 1:
         layer1_ = Dense(16)
     if mode == 2:
-        layer1_ = Conv1DTranspose(16, 3, padding='valid')(layer2_)
+        layer1_ = Conv1DTranspose(16, 3, padding='same')(layer2_)
     if mode == 3:
         layer1_ = Conv1D(16, 3, padding='valid')(layer2_)
     layer1_ = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer1-reluT')(layer1_)
@@ -84,21 +95,33 @@ def feature_extractor(train_x, mode):
     # optimizer = tf.optimizers.Adam(clipvalue=0.5)
     autoencoder.compile(optimizer='sgd', loss='mean_squared_error')
     print(autoencoder.summary())
-    autoencoder.fit(train_dataset, epochs=epochs, verbose=2)
+    # autoencoder.fit(train_dataset, epochs=epochs, verbose=2)
+    autoencoder.fit(train_x,train_x, validation_split=0.30, batch_size=batch_size,epochs=epochs, verbose=2)
     encoder = Model(input_layer, encodings)
     return encoder.predict(train_x)
 
 
 # using all only the moving features of the users in feature extraction
-def feature_extraction_no_original(t_nan):
+def feature_extraction_moving_features(t_nan):
     moving_features = t_nan.groupby("id").apply(calculate_feature, 12)
     train_x = moving_features.dropna()
-    encodings = feature_extractor(data_preparation(train_x), 1)
+    encodings = feature_extractor(data_preparation(train_x, train_x.columns), 1)
 
 
 # using only the original features of the users in feature extraction
-def feature_extraction_original(train_x):
-    feature_extractor(data_preparation(train_x), 2)
+def feature_extraction_original_data(t_nan):
+    window_size = 12
+    train_x = t_nan.copy()
+    nan_indices = train_x[train_x.usage.isna()].index.to_numpy()
+    train_x = preimputation(train_x, "usage")
+    scaler = MinMaxScaler()
+    train_x['usage'] = scaler.fit_transform(train_x['usage'].to_numpy().reshape(-1, 1))
+    usage = train_x['usage'].values
+    usage = np.pad(usage, (window_size, window_size), 'constant', constant_values=(usage[0], usage[-1]))
+    usage = create_neighborhood(usage, window_size)
+    usage = usage[nan_indices]
+    usage = usage.reshape(usage.shape[0], 1, usage.shape[1])
+    feature_extractor(usage, 2)
 
 
 # using all the features of the users in feature extraction
@@ -111,4 +134,5 @@ if __name__ == '__main__':
     x, x_nan = get_dataset(nan_percent)
     for id in range(1, 2):
         (t, t_nan) = get_user_by_id(x, x_nan, id)
-        feature_extraction_no_original(t_nan)
+        feature_extraction_moving_features(t_nan)
+        # feature_extraction_original_data(t_nan)
