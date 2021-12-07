@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 from src.methods.BaseModel.Base import Base
 from src.preprocessing.insert_nan import nan_percents_str
 from src.preprocessing.load_dataset import get_train_test_dataset
-from src.utils.Methods import methods_trainable
+from src.utils.Methods import all_methods
 
 
 def load_all_errors():
@@ -15,7 +15,7 @@ def load_all_errors():
     for nan_percent in nan_percents_str[:1]:
         middle_train = pd.DataFrame()
         middle_test = pd.DataFrame()
-        for model in methods_trainable:
+        for model in all_methods:
             temp_train, temp_test = Base.load_errors(model.get_name(), nan_percent)
             temp_train["model"] = model.get_name()
             temp_test["model"] = model.get_name()
@@ -31,7 +31,7 @@ def load_all_errors():
 def load_all_error_dfs(nan_percent):
     final_train = None
     final_test = None
-    for model in methods_trainable:
+    for model in all_methods:
         temp_train, temp_test = Base.load_error_dfs(model.get_name(), nan_percent, "mse", model.get_train_params())
         if final_train is None:
             final_test = temp_test
@@ -46,6 +46,9 @@ def load_all_error_dfs(nan_percent):
 
 
 def train_regression(train_error_dfs, test_error_dfs, train_errors, test_errors):
+    train_error_dfs = train_error_dfs.dropna()
+    test_error_dfs = test_error_dfs.dropna()
+
     x_scaler = MinMaxScaler()
     x_train = train_error_dfs.drop(columns=["usage"]).to_numpy()
     x_test = test_error_dfs.drop(columns=["usage"]).to_numpy()
@@ -59,9 +62,12 @@ def train_regression(train_error_dfs, test_error_dfs, train_errors, test_errors)
 
     reg = LinearRegression()
     reg = reg.fit(x_train, y_train)
+    y_pred = reg.predict(x_train)
+    y_pred = y_scaler.inverse_transform(y_pred)
+    print("regression train = ", mean_squared_error(y_train, y_pred))
     y_pred = reg.predict(x_test)
     y_pred = y_scaler.inverse_transform(y_pred)
-    print(mean_squared_error(y_test, y_pred))
+    print("regression test = ", mean_squared_error(y_test, y_pred))
     print("best method in train ", train_errors.iloc[train_errors.mse.argmin()].mse)
     print("best method in test ", test_errors.iloc[test_errors.mse.argmin()].mse)
 

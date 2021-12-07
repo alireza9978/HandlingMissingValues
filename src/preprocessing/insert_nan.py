@@ -36,13 +36,37 @@ def insert_nan_train_test(file_name: str, train_percent: float, train_files: boo
         print("nan percent = ", percent)
         print(main_df.isna().sum())
         main_df.to_csv(Path(
-            root + "datasets/train_test/with_nan/""{}_{}_{}_nan_{}.csv".format(file_name, file_mode, train_percent,
-                                                                               percent)), index=False)
+            root + "datasets/train_test/with_nan/{}_{}_{}_nan_{}.csv".format(file_name, file_mode, train_percent,
+                                                                             percent)), index=False)
+
+
+def insert_nan_train_test_related(file_name: str, source_file_name: str, train_percent: float,
+                                  train_files: bool = True):
+    if train_files:
+        file_mode = "train"
+    else:
+        file_mode = "test"
+
+    for percent in nan_percents:
+        main_df = pd.read_csv(
+            Path(root + "datasets/train_test/{}_{}_{}.csv".format(file_name, file_mode, train_percent)))
+        source_main_df = pd.read_csv(
+            Path(root + "datasets/train_test/with_nan/{}_{}_{}_nan_{}.csv".format(source_file_name, file_mode, train_percent,
+                                                                                  percent)))
+        main_df.loc[source_main_df[source_main_df.usage.isna()].index, "usage"] = np.nan
+        print("nan percent = ", percent)
+        print(main_df.isna().sum())
+        main_df.to_csv(Path(
+            root + "datasets/train_test/with_nan/{}_{}_{}_nan_{}.csv".format(file_name, file_mode, train_percent,
+                                                                             percent)), index=False)
 
 
 if __name__ == '__main__':
     file = "smart_star_hourly_fully_modified"
+    source_file = "smart_star_hourly"
     train = 0.3
     # insert_nan(file)
-    insert_nan_train_test(file, train)
-    insert_nan_train_test(file, train, False)
+    # insert_nan_train_test(file, train)
+    # insert_nan_train_test(file, train, False)
+    insert_nan_train_test_related(file, source_file, train)
+    insert_nan_train_test_related(file, source_file, train, False)

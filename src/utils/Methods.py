@@ -21,26 +21,29 @@ measures = [mean_square_error, mean_absolute_error, mean_absolute_percentage_err
 measures_name = ["mse", "mae", "mape"]
 
 methods_trainable = [
-    TotalMean,
-    TotalMedian,
-    Interpolation,
-    FirstObservationCarriedBackward,
-    LastObservationCarriedForward,
-    WeightedMean,
-    MovingMean,
-    ExponentialMean,
-    Arima,
+    # TotalMean,
+    # TotalMedian,
+    # Interpolation,
+    # FirstObservationCarriedBackward,
+    # LastObservationCarriedForward,
+    # WeightedMean,
+    # MovingMean,
+    # ExponentialMean,
+    # Arima,
 ]
 
 methods_trainable_modified_dataset = [
-    Svr,
-    Knn,
-    Kmeans,
+    # Svr,
+    # Knn,
+    # Kmeans,
     Kmedoids,
     # Dbscan,
     FuzzyCMean,
     LinearRegressionImputer,
 ]
+
+all_methods = methods_trainable
+# all_methods = methods_trainable + methods_trainable_modified_dataset
 
 
 def fill_nan(temp_x: pd.DataFrame, temp_x_nan: pd.DataFrame, fill_nan_method, params=None) -> pd.DataFrame:
