@@ -9,7 +9,7 @@ from src.utils.parallelizem import apply_parallel_two, apply_parallel
 class Base(ABC):
 
     def __init__(self, data_frames):
-        data_frames = self.select_one_user(99, data_frames)
+        # data_frames = self.select_one_user(99, data_frames)
         train_df, test_df, train_nan_df, test_nan_df = data_frames
         self.train_df = train_df
         self.test_df = test_df

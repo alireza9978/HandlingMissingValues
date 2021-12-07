@@ -15,7 +15,8 @@ class Svr(Base):
 
     @staticmethod
     def get_train_params():
-        return [(1000.0, 2), (1000.0, 3), (1000.0, 5), (1000.0, 7), (1000.0, 9)]
+        return [(1, 2), (1, 3), (1, 5)]
+        # return [(1, 2)]
 
     @staticmethod
     def get_name():
@@ -36,7 +37,8 @@ class Svr(Base):
         x_train = scaler.fit_transform(non_nan_rows.drop(columns=['usage']))
         x_test = scaler.transform(nan_row)
 
-        svr_model = SVR(C=c, epsilon=0.15, kernel='rbf', gamma='scale', degree=degree)
+        # svr_model = SVR(C=c, epsilon=0.15, kernel='poly', gamma='scale', degree=degree)
+        svr_model = SVR(C=1, epsilon=0.15, kernel='poly', gamma='scale', degree=degree)
         svr_model.fit(x_train, non_nan_rows['usage'])
         usage = svr_model.predict(x_test)
         return pd.DataFrame({"predicted_usage": usage.squeeze()},
