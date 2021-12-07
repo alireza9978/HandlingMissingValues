@@ -91,7 +91,7 @@ if __name__ == '__main__':
     # (x, x_nan) = get_random_user(x, x_nan)
     results = []
     for id in range(1, 114):
-        (t, t_nan) = get_user_by_id(x, x_nan,id)
+        (t, t_nan) = get_user_by_id(x, x_nan, id)
         moving_features = t_nan.groupby("id").apply(calculate_feature, 12)
         moving_features = moving_features.reset_index(level=0).drop(columns=["id"])
         usage_error_df, methods_name = add_methods_result(nan_percent)
@@ -112,17 +112,17 @@ if __name__ == '__main__':
             results.append([id, i, result])
     results = pd.DataFrame(results, columns=["id", "n_clusters", "mse"])
     results.to_csv(Path(root + 'results/clustering_results_{}.csv'.format(nan_percent)), index=False)
-        # clf = RandomForestClassifier(n_estimators=32, max_depth=5, min_samples_leaf=4)
-        # clf.fit(train_x, train_y)
-        # train_prediction = clf.predict(train_x)
-        # y_prediction = clf.predict(test_x)
-        #
-        # print("best mse: ", moving_features["minimum_error"].mean())
-        # print("best mse for single method: ", method_results[method_results.argmin()],
-        #       method_results.index[method_results.argmin()])
-        # print("train: ")
-        # print("accuracy: ", accuracy_score(train_y, train_prediction))
-        # print("mse: ", calculate_error(train_error_df, train_prediction))
-        # print("test: ")
-        # print("accuracy: ", accuracy_score(test_y, y_prediction))
-        # print("mse: ", calculate_error(test_error_df, y_prediction))
+    # clf = RandomForestClassifier(n_estimators=32, max_depth=5, min_samples_leaf=4)
+    # clf.fit(train_x, train_y)
+    # train_prediction = clf.predict(train_x)
+    # y_prediction = clf.predict(test_x)
+    #
+    # print("best mse: ", moving_features["minimum_error"].mean())
+    # print("best mse for single method: ", method_results[method_results.argmin()],
+    #       method_results.index[method_results.argmin()])
+    # print("train: ")
+    # print("accuracy: ", accuracy_score(train_y, train_prediction))
+    # print("mse: ", calculate_error(train_error_df, train_prediction))
+    # print("test: ")
+    # print("accuracy: ", accuracy_score(test_y, y_prediction))
+    # print("mse: ", calculate_error(test_error_df, y_prediction))
