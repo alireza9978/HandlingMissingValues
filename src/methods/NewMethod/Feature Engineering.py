@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -5,7 +7,7 @@ from keras.layers import Conv1D, Conv1DTranspose
 from keras.layers import Dense, Input
 from keras.models import Model
 from sklearn.preprocessing import MinMaxScaler
-
+from src.preprocessing.load_dataset import root
 from src.preprocessing.load_dataset import get_dataset
 from src.utils.Dataset import get_user_by_id
 
@@ -63,7 +65,7 @@ def create_neighborhood(train, window_size):
 def feature_extractor(train_x, mode):
     batch_size = 32
     epochs = 150
-    # train_dataset = tf.data.Dataset.from_tensor_slices((train_x, train_x)).batch(batch_size)
+    train_dataset = tf.data.Dataset.from_tensor_slices((train_x, train_x)).batch(batch_size)
     input_layer = Input(shape=(train_x.shape[1], train_x.shape[2]))
 
     # Encoder
@@ -84,7 +86,7 @@ def feature_extractor(train_x, mode):
     layer2_ = tf.keras.layers.LeakyReLU(alpha=0.3, name='layer2-reluT')(layer2_)
     layer2_ = tf.keras.layers.Dropout(0.2)(layer2_)
     if mode == 1:
-        layer1_ = Dense(16)
+        layer1_ = Dense(16)(layer2_)
     if mode == 2:
         layer1_ = Conv1DTranspose(16, 3, padding='same')(layer2_)
     if mode == 3:
@@ -95,8 +97,8 @@ def feature_extractor(train_x, mode):
     # optimizer = tf.optimizers.Adam(clipvalue=0.5)
     autoencoder.compile(optimizer='sgd', loss='mean_squared_error')
     print(autoencoder.summary())
-    # autoencoder.fit(train_dataset, epochs=epochs, verbose=2)
-    autoencoder.fit(train_x,train_x, validation_split=0.30, batch_size=batch_size,epochs=epochs, verbose=2)
+    autoencoder.fit(train_dataset, epochs=epochs, verbose=2)
+    # autoencoder.fit(train_x, train_x, validation_split=0.30, batch_size=batch_size, epochs=epochs, verbose=2)
     encoder = Model(input_layer, encodings)
     return encoder.predict(train_x)
 
@@ -106,6 +108,7 @@ def feature_extraction_moving_features(t_nan):
     moving_features = t_nan.groupby("id").apply(calculate_feature, 12)
     train_x = moving_features.dropna()
     encodings = feature_extractor(data_preparation(train_x, train_x.columns), 1)
+    return encodings
 
 
 # using only the original features of the users in feature extraction
@@ -121,12 +124,13 @@ def feature_extraction_original_data(t_nan):
     usage = create_neighborhood(usage, window_size)
     usage = usage[nan_indices]
     usage = usage.reshape(usage.shape[0], 1, usage.shape[1])
-    feature_extractor(usage, 2)
+    encodings = feature_extractor(usage, 2)
+    return encodings
 
 
 # using all the features of the users in feature extraction
 def feature_extraction_combination(train_x, ):
-    feature_extractor(data_preparation(train_x), 3)
+    feature_extractor(data_preparation(train_x, train_x.columns), 3)
 
 
 if __name__ == '__main__':
@@ -134,5 +138,8 @@ if __name__ == '__main__':
     x, x_nan = get_dataset(nan_percent)
     for id in range(1, 2):
         (t, t_nan) = get_user_by_id(x, x_nan, id)
-        feature_extraction_moving_features(t_nan)
+        encodings = feature_extraction_moving_features(t_nan)
+        pd.DataFrame(encodings.reshape(encodings.shape[0],encodings.shape[2])).to_csv(Path(root + "encodings_moving_features_" + str(id) + "_" + nan_percent + ".csv"))
+        encodings = feature_extraction_original_data(t_nan)
+        pd.DataFrame(encodings.reshape(encodings.shape[0],encodings.shape[2])).to_csv(Path(root+"encodings_original_data_" + str(id) + "_" + nan_percent + ".csv"))
         # feature_extraction_original_data(t_nan)
