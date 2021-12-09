@@ -9,9 +9,12 @@ from src.utils.parallelizem import apply_parallel_two, apply_parallel
 
 class Base(ABC):
 
-    def __init__(self, data_frames):
+    def __init__(self, inputs):
+        data_frames, split = inputs
         # data_frames = self.select_one_user(99, data_frames)
+        data_frames = self.select_users([99, 12, 65, 35], data_frames)
         train_df, test_df, train_nan_df, test_nan_df = data_frames
+        self.split = split
         self.train_df = train_df
         self.test_df = test_df
         self.train_nan_df = train_nan_df
@@ -23,6 +26,13 @@ class Base(ABC):
         self.train_errors = None
         self.test_error_dfs = None
         self.test_errors = None
+
+    @staticmethod
+    def select_users(user_ids, data_frames):
+        data_frames = list(data_frames)
+        for i in range(len(data_frames)):
+            data_frames[i] = data_frames[i][data_frames[i].id.isin(user_ids)]
+        return data_frames
 
     @staticmethod
     def select_one_user(user_id, data_frames):
@@ -81,15 +91,27 @@ class Base(ABC):
         from src.utils.Methods import measures_name
         for train_param in self.train_error_dfs.keys():
             error_df = self.train_error_dfs[train_param]
-            save_error_two(error_df, nan_percent, name, train_param, train=True)
+            if self.split is None:
+                save_error_two(error_df, nan_percent, name, train_param, train=True)
+            else:
+                save_error_two(error_df, nan_percent, name, train_param + "_" + self.split, train=True)
         for train_param in self.test_error_dfs.keys():
             error_df = self.test_error_dfs[train_param]
-            save_error_two(error_df, nan_percent, name, train_param, train=False)
+            if self.split is None:
+                save_error_two(error_df, nan_percent, name, train_param, train=False)
+            else:
+                save_error_two(error_df, nan_percent, name, train_param + "_" + self.split, train=False)
         temp_columns = ["params"] + measures_name
         self.test_errors.columns = temp_columns
-        self.test_errors.to_csv(root + f"results/methods/test_result_{name}_{nan_percent}.csv", index=False)
         self.train_errors.columns = temp_columns
-        self.train_errors.to_csv(root + f"results/methods/train_result_{name}_{nan_percent}.csv", index=False)
+        if self.split is None:
+            self.test_errors.to_csv(root + f"results/methods/test_result_{name}_{nan_percent}.csv", index=False)
+            self.train_errors.to_csv(root + f"results/methods/train_result_{name}_{nan_percent}.csv", index=False)
+        else:
+            self.test_errors.to_csv(root + f"results/methods/test_result_{name}_{nan_percent}_{self.split}.csv",
+                                    index=False)
+            self.train_errors.to_csv(root + f"results/methods/train_result_{name}_{nan_percent}_{self.split}.csv",
+                                     index=False)
 
     @staticmethod
     def load_errors(name, nan_percent):
