@@ -7,8 +7,9 @@ from keras.layers import Conv1D, Conv1DTranspose
 from keras.layers import Dense, Input
 from keras.models import Model
 from sklearn.preprocessing import MinMaxScaler
-from src.preprocessing.load_dataset import root
+
 from src.preprocessing.load_dataset import get_dataset
+from src.preprocessing.load_dataset import root
 from src.utils.Dataset import get_user_by_id
 
 
@@ -134,12 +135,14 @@ def feature_extraction_combination(train_x, ):
 
 
 if __name__ == '__main__':
-    nan_percent = "0.1"
+    nan_percent = "0.01"
     x, x_nan = get_dataset(nan_percent)
-    for id in range(1, 2):
-        (t, t_nan) = get_user_by_id(x, x_nan, id)
+    for user_id in [99, 12, 65, 35]:
+        (t, t_nan) = get_user_by_id(x, x_nan, user_id)
         encodings = feature_extraction_moving_features(t_nan)
-        pd.DataFrame(encodings.reshape(encodings.shape[0],encodings.shape[2])).to_csv(Path(root + "encodings_moving_features_" + str(id) + "_" + nan_percent + ".csv"))
+        pd.DataFrame(encodings.reshape(encodings.shape[0], encodings.shape[2])).to_csv(
+            Path(root + "encodings_moving_features_" + str(user_id) + "_" + nan_percent + ".csv"))
         encodings = feature_extraction_original_data(t_nan)
-        pd.DataFrame(encodings.reshape(encodings.shape[0],encodings.shape[2])).to_csv(Path(root+"encodings_original_data_" + str(id) + "_" + nan_percent + ".csv"))
+        pd.DataFrame(encodings.reshape(encodings.shape[0], encodings.shape[2])).to_csv(
+            Path(root + "encodings_original_data_" + str(user_id) + "_" + nan_percent + ".csv"))
         # feature_extraction_original_data(t_nan)
