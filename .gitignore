@@ -136,3 +136,4 @@ dmypy.json
 /venv_39/
 /saved_models/
 .idea
+/crawler
