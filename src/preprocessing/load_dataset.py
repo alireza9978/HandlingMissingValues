@@ -22,6 +22,28 @@ def get_train_test_fully_modified_date(nan_percent: str, test_percent: float):
     return train_df, test_df, train_nan_df, test_nan_df
 
 
+def get_train_test_dataset_triple(nan_percent: str):
+    test_percent = "0.33"
+    file_name = "smart_star_hourly"
+    results = []
+    for ch in ["a", "b", "c"]:
+        train_df = pd.read_csv(
+            Path(root + "datasets/train_test/{}_train_{}_{}.csv".format(file_name, test_percent, ch)))
+        test_df = pd.read_csv(Path(root + "datasets/train_test/{}_test_{}_{}.csv".format(file_name, test_percent, ch)))
+        train_nan_df = pd.read_csv(
+            Path(root + "datasets/train_test/with_nan/{}_train_{}_{}_nan_{}.csv".format(file_name, test_percent, ch,
+                                                                                        nan_percent)))
+        test_nan_df = pd.read_csv(
+            Path(root + "datasets/train_test/with_nan/{}_test_{}_{}_nan_{}.csv".format(file_name, test_percent, ch,
+                                                                                       nan_percent)))
+        train_df.date = pd.to_datetime(train_df.date)
+        test_df.date = pd.to_datetime(test_df.date)
+        train_nan_df.date = pd.to_datetime(train_nan_df.date)
+        test_nan_df.date = pd.to_datetime(test_nan_df.date)
+        results.append(((train_df, test_df, train_nan_df, test_nan_df), ch))
+    return results
+
+
 def get_train_test_dataset(nan_percent: str, test_percent: float):
     file_name = "smart_star_hourly"
     train_df = pd.read_csv(Path(root + "datasets/train_test/{}_train_{}.csv".format(file_name, test_percent)))
