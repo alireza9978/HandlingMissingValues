@@ -1,78 +1,87 @@
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Lasso, SGDRegressor, ElasticNet, Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.svm import SVR
 
-from src.methods.BaseModel.Base import Base
-from src.preprocessing.insert_nan import nan_percents_str
-from src.preprocessing.load_dataset import get_train_test_dataset
-from src.utils.Methods import all_methods
+from src.utils.Dataset import load_all_errors_triple, load_all_error_dfs_triple
 
 
-def load_all_errors():
-    final_train = pd.DataFrame()
-    final_test = pd.DataFrame()
-    for nan_percent in nan_percents_str[:1]:
-        middle_train = pd.DataFrame()
-        middle_test = pd.DataFrame()
-        for model in all_methods:
-            temp_train, temp_test = Base.load_errors(model.get_name(), nan_percent)
-            temp_train["model"] = model.get_name()
-            temp_test["model"] = model.get_name()
-            middle_train = pd.concat([middle_train, temp_train])
-            middle_test = pd.concat([middle_test, temp_test])
-        middle_train["nan_percent"] = nan_percent
-        middle_test["nan_percent"] = nan_percent
-        final_train = pd.concat([middle_train, final_train])
-        final_test = pd.concat([middle_test, final_test])
-    return final_train, final_test
+def train_model(train_x, test_x, train_y, test_y):
+    x_scaler = MinMaxScaler()
+    train_x = x_scaler.fit_transform(train_x)
+    test_x = x_scaler.transform(test_x)
+
+    y_scaler = MinMaxScaler()
+    scaled_train_y = y_scaler.fit_transform(train_y)
+    models = [SVR(kernel="linear"), SVR(), LinearRegression(), Lasso(), SGDRegressor(), ElasticNet(), Ridge()]
+    results = []
+    for model in models:
+        model = model.fit(train_x, scaled_train_y.ravel())
+        y_pred_train = y_scaler.inverse_transform(model.predict(train_x).reshape(-1, 1))
+        y_pred_test = y_scaler.inverse_transform(model.predict(test_x).reshape(-1, 1))
+        # print(str(model))
+        # print("train = ", mean_squared_error(train_y, y_pred_train))
+        result = mean_squared_error(test_y, y_pred_test)
+        # print("test = ", result)
+        results.append(result)
+    return results
 
 
-def load_all_error_dfs(nan_percent):
-    final_train = None
-    final_test = None
-    for model in all_methods:
-        temp_train, temp_test = Base.load_error_dfs(model.get_name(), nan_percent, "mse", model.get_train_params())
-        if final_train is None:
-            final_test = temp_test
-            final_train = temp_train
-        else:
-            final_train = final_train.join(temp_train)
-            final_test = final_test.join(temp_test)
-    data_frames = get_train_test_dataset(nan_percent, 0.3)
-    final_test = final_test.join(data_frames[1][["usage"]])
-    final_train = final_train.join(data_frames[0][["usage"]])
-    return final_train, final_test
+def print_best_method(user_train_error_dfs, user_test_error_dfs, best_methods):
+    best_error = 10
+    best_error_col = None
+    best_error_test = 10
+    best_error_col_test = None
+    y_true = user_train_error_dfs["usage"]
+    y_true_test = user_test_error_dfs["usage"]
+    for col in best_methods:
+        temp_error = mean_squared_error(y_true, user_train_error_dfs[col])
+        if temp_error < best_error:
+            best_error = temp_error
+            best_error_col = col
+        temp_error = mean_squared_error(y_true_test, user_test_error_dfs[col])
+        if temp_error < best_error_test:
+            best_error_test = temp_error
+            best_error_col_test = col
+    return [best_error, best_error_col, best_error_test, best_error_col_test]
+    # print("best train error = ", )
+    # print("best test error = ", )
 
 
 def train_regression(train_error_dfs, test_error_dfs, train_errors, test_errors):
     train_error_dfs = train_error_dfs.dropna()
     test_error_dfs = test_error_dfs.dropna()
+    best_methods = train_errors.sort_values("mse").apply(lambda row: row["model"] + "_" + str(row["params"]),
+                                                         axis=1)[:15].to_list()
+    required_columns = best_methods + ["usage", "id"]
+    train_error_dfs = train_error_dfs[required_columns]
+    test_error_dfs = test_error_dfs[required_columns]
 
-    x_scaler = MinMaxScaler()
-    x_train = train_error_dfs.drop(columns=["usage"]).to_numpy()
-    x_test = test_error_dfs.drop(columns=["usage"]).to_numpy()
-    x_train = x_scaler.fit_transform(x_train)
-    x_test = x_scaler.transform(x_test)
+    results = pd.DataFrame()
+    # results_methods = pd.DataFrame()
+    for user_id in train_error_dfs["id"].unique():
+        user_train_error_dfs = train_error_dfs[train_error_dfs.id == user_id].drop(columns=["id"])
+        user_test_error_dfs = test_error_dfs[test_error_dfs.id == user_id].drop(columns=["id"])
+        x_train = user_train_error_dfs.drop(columns=["usage"]).to_numpy()
+        x_test = user_test_error_dfs.drop(columns=["usage"]).to_numpy()
 
-    y_scaler = MinMaxScaler()
-    y_train = train_error_dfs[["usage"]].to_numpy()
-    y_test = test_error_dfs[["usage"]].to_numpy()
-    y_train = y_scaler.fit_transform(y_train)
+        y_train = user_train_error_dfs[["usage"]].to_numpy()
+        y_test = user_test_error_dfs[["usage"]].to_numpy()
 
-    reg = LinearRegression()
-    reg = reg.fit(x_train, y_train)
-    y_pred = reg.predict(x_train)
-    y_pred = y_scaler.inverse_transform(y_pred)
-    print("regression train = ", mean_squared_error(y_train, y_pred))
-    y_pred = reg.predict(x_test)
-    y_pred = y_scaler.inverse_transform(y_pred)
-    print("regression test = ", mean_squared_error(y_test, y_pred))
-    print("best method in train ", train_errors.iloc[train_errors.mse.argmin()].mse)
-    print("best method in test ", test_errors.iloc[test_errors.mse.argmin()].mse)
+        a = train_model(x_train, x_test, y_train, y_test)
+        results = results.append(pd.Series(a), ignore_index=True)
+        # b = print_best_method(user_train_error_dfs, user_test_error_dfs, best_methods)
+        # results_methods = results_methods.append(pd.Series(b), ignore_index=True)
+
+    print("best test mse = ", results.mean().min())
+    print(print_best_method(train_error_dfs, test_error_dfs, best_methods))
 
 
 if __name__ == '__main__':
-    main_train_errors, main_test_errors = load_all_errors()
-    main_train_error_dfs, main_test_error_dfs = load_all_error_dfs("0.01")
-    train_regression(main_train_error_dfs, main_test_error_dfs, main_train_errors, main_test_errors)
+    errors = load_all_errors_triple()
+    error_dfs = load_all_error_dfs_triple("0.01")
+    for error, error_df in zip(errors, error_dfs):
+        main_train_errors, main_test_errors = error
+        main_train_error_dfs, main_test_error_dfs = error_df
+        train_regression(main_train_error_dfs, main_test_error_dfs, main_train_errors, main_test_errors)
