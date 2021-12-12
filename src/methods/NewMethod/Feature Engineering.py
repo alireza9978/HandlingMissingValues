@@ -108,8 +108,9 @@ def feature_extractor(train_x, mode):
 def feature_extraction_moving_features(t_nan):
     moving_features = t_nan.groupby("id").apply(calculate_feature, 12)
     train_x = moving_features.dropna()
+    nan_indexes = train_x.index
     encodings = feature_extractor(data_preparation(train_x, train_x.columns), 1)
-    return encodings
+    return encodings, nan_indexes
 
 
 # using only the original features of the users in feature extraction
@@ -138,11 +139,16 @@ if __name__ == '__main__':
     nan_percent = "0.01"
     x, x_nan = get_dataset(nan_percent)
     for user_id in [99, 12, 65, 35]:
-        (t, t_nan) = get_user_by_id(x, x_nan, user_id)
-        encodings = feature_extraction_moving_features(t_nan)
-        pd.DataFrame(encodings.reshape(encodings.shape[0], encodings.shape[2])).to_csv(
-            Path(root + "encodings_moving_features_" + str(user_id) + "_" + nan_percent + ".csv"))
-        encodings = feature_extraction_original_data(t_nan)
-        pd.DataFrame(encodings.reshape(encodings.shape[0], encodings.shape[2])).to_csv(
-            Path(root + "encodings_original_data_" + str(user_id) + "_" + nan_percent + ".csv"))
-        # feature_extraction_original_data(t_nan)
+        (user_x, user_x_nan) = get_user_by_id(x, x_nan, user_id)
+        moving_features_encodings, result_index = feature_extraction_moving_features(user_x_nan)
+        moving_features_encodings_df = pd.DataFrame(
+            moving_features_encodings.reshape(moving_features_encodings.shape[0], moving_features_encodings.shape[2]),
+            index=result_index)
+        target_path = Path(root + "datasets/extracted_features/encodings_moving_features_" +
+                           str(user_id) + "_" + nan_percent + ".csv")
+        moving_features_encodings_df.to_csv(target_path)
+
+    # user_encodings = feature_extraction_original_data(x_nan)
+    # pd.DataFrame(user_encodings.reshape(user_encodings.shape[0], user_encodings.shape[2])).to_csv(
+    #     Path(root + "encodings_original_data_" + str(user_id) + "_" + nan_percent + ".csv"))
+    # feature_extraction_original_data(t_nan)
