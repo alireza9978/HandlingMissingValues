@@ -1,19 +1,24 @@
-import pandas as pd
 import matplotlib.pyplot as plt
-from src.preprocessing.load_dataset import get_dataset, root
 import numpy as np
+import pandas as pd
+
+from src.preprocessing.load_dataset import get_dataset, root
 
 
 def plot_random_users_usage(temp_df: pd.DataFrame):
-    week_x = temp_df.set_index("date")
-    week_x = week_x.groupby("id").apply(lambda df: df.resample("1W").sum()[["usage"]]).reset_index()
-    users_id = week_x.id.unique()
-    sample_users = np.random.choice(users_id, 20)
-    for user_id in sample_users:
-        temp_user = week_x[week_x.id == user_id]
-        plt.plot(temp_user.usage)
-        plt.savefig(root + f"results/user_figures/{user_id}.jpeg")
-        plt.close()
+    folders = ["hourly", "weekly", "monthly"]
+    time_scales = ["1H", "1W", "1M"]
+    temp_df = temp_df.set_index("date")
+
+    def inner_user_plotter(inner_df: pd.DataFrame):
+        user_id = inner_df.id.values[0]
+        for time_scale, folder in zip(time_scales, folders):
+            inner_df = inner_df.resample(time_scale).sum()[["usage"]]
+            plt.plot(inner_df.usage)
+            plt.savefig(root + f"plots/user_figures/user_usage_{folder}/{user_id}.jpeg")
+            plt.close()
+
+    temp_df.groupby("id").apply(inner_user_plotter)
 
 
 def plot_users_mean_usage_in_day(temp_df: pd.DataFrame):
@@ -28,7 +33,7 @@ def plot_users_mean_usage_in_day(temp_df: pd.DataFrame):
         name = "user = " + str(user_id)
         plt.errorbar(x_axis, inner_df["usage"], inner_df["std"], marker='^', label=name)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.savefig(root + f"results/user_figures/{user_id}.jpeg")
+        plt.savefig(root + f"plots/user_figures/user_mean_single_day/{user_id}.jpeg")
         plt.close()
 
     mean_df.groupby(["id"]).apply(inner_plot)
@@ -36,4 +41,5 @@ def plot_users_mean_usage_in_day(temp_df: pd.DataFrame):
 
 if __name__ == '__main__':
     x, x_nan = get_dataset("0.01")
-    plot_users_mean_usage_in_day(x)
+    # plot_users_mean_usage_in_day(x)
+    plot_random_users_usage(x)
