@@ -1,15 +1,12 @@
 from builtins import enumerate
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 from src.measurements.Measurements import *
-from src.methods.ARIMA import ARIMA
-from src.methods.MovingWindow import MovingMean
-from src.methods.Simple import Interpolation
-from src.preprocessing.load_dataset import get_dataset
 from src.preprocessing.load_dataset import root
-from src.utils.Dataset import get_random_user
-from src.utils.parallelizem import apply_parallel
+from src.utils.Dataset import load_all_methods_result
+from src.utils.Methods import measures_name
 
 
 def plot_highest_errors(main_df, nan_df, filled_users, model_name):
@@ -52,28 +49,60 @@ def plot_highest_errors(main_df, nan_df, filled_users, model_name):
     filled_users.apply(inner_plot, args=[10], axis=1)
 
 
-def run_model(main_df, nan_df, model, temp_params=None):
-    filled_users = apply_parallel(nan_df.groupby("id"), model, temp_params)
-    filled_users[2] = filled_users[1].apply(lambda idx: main_df.loc[idx])
-    return filled_users
+def select_best_param(temp_df: pd.DataFrame):
+    temp_result = temp_df[['mse', 'mae', 'mape', 'mse_test', 'mae_test', 'mape_test']].mean()
+    temp_result["nan_percent"] = temp_df["nan_percent"].values[0]
+    temp_result["model"] = temp_df["model"].values[0]
+    return temp_result
+
+
+def clean_result_df():
+    train_df, test_df = load_all_methods_result()
+    train_df = train_df.sort_values("mse")
+    train_df = train_df[train_df.mse < 5]
+    train_df = train_df.set_index(["nan_percent", "model", "params"])
+    test_df = test_df.set_index(["nan_percent", "model", "params"])
+    total_df = train_df.join(test_df, rsuffix="_test")
+    total_df = total_df.reset_index()
+    total_df = total_df.groupby(["nan_percent", "model"]).apply(select_best_param)
+    total_df = total_df.reset_index(drop=True)
+    return total_df
+
+
+def plot_results_df(results: pd.DataFrame):
+    def plot_single_nan_percents_result(inner_df: pd.DataFrame):
+        nan_percent = inner_df.nan_percent.values[0]
+        temp_path = root + f"plots/methods/{nan_percent}"
+        Path(temp_path).mkdir(parents=True, exist_ok=True)
+        x = np.arange(inner_df.shape[0])
+        for measure in measures_name:
+            selected_columns = [measure, "model"]
+            selected_df = inner_df[selected_columns].sort_values("model")
+            plt.figure(figsize=(5, 7))
+            plt.bar(x, selected_df[measure])
+            plt.ylabel(measure)
+            plt.xlabel("Method Name")
+            plt.xticks(x, selected_df["model"])
+            plt.xticks(rotation=90)
+            plt.tight_layout()
+            plt.savefig(root + f"plots/methods/{nan_percent}/train_{measure}.jpeg")
+            plt.close()
+
+            selected_columns = [measure + "_test", "model"]
+            selected_df = inner_df[selected_columns].sort_values("model")
+            plt.figure(figsize=(5, 7))
+            plt.bar(x, selected_df[selected_columns[0]])
+            plt.ylabel(measure)
+            plt.xlabel("Method Name")
+            plt.xticks(x, selected_df["model"])
+            plt.xticks(rotation=90)
+            plt.tight_layout()
+            plt.savefig(root + f"plots/methods/{nan_percent}/test_{measure}.jpeg")
+            plt.close()
+
+    results.groupby("nan_percent").apply(plot_single_nan_percents_result)
 
 
 if __name__ == '__main__':
-    selected_methods = [Mean.fill_nan, ARIMA.fill_nan, Interpolation.fill_nan]
-    selected_params = [[4, 6, 8, 10, 12, 24, 48, 168, 720], None, None]
-    selected_methods_name = [Mean.get_name(), ARIMA.get_name(), Interpolation.get_name()]
-    nan_percents = ["0.01", "0.1", "0.2"]
-
-    for nan_percent in nan_percents:
-        x, x_nan = get_dataset(nan_percent)
-        x, x_nan = get_random_user(x, x_nan)
-        for j, method in enumerate(selected_methods):
-            params = selected_params[j]
-            if params is not None:
-                for param in params:
-                    result = run_model(x, x_nan, method, param)
-                    plot_highest_errors(x, x_nan, result, f"{selected_methods_name[j]}_param{param}_{nan_percent}")
-            else:
-                result = run_model(x, x_nan, method)
-                plot_highest_errors(x, x_nan, result, f"{selected_methods_name[j]}_{nan_percent}")
-        print(f"finish plotting in {nan_percent} percent")
+    temp_df = clean_result_df()
+    plot_results_df(temp_df)
