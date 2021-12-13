@@ -19,7 +19,8 @@ def get_train_test_fully_modified_date(nan_percent: str, test_percent: float):
         Path(root + "datasets/train_test/with_nan/{}_train_{}_nan_{}.csv".format(file_name, test_percent, nan_percent)))
     test_nan_df = pd.read_csv(
         Path(root + "datasets/train_test/with_nan/{}_test_{}_nan_{}.csv".format(file_name, test_percent, nan_percent)))
-    return train_df, test_df, train_nan_df, test_nan_df
+    return [((train_df, test_df, train_nan_df, test_nan_df), None)]
+
 
 
 def get_train_test_dataset_triple(nan_percent: str):
@@ -56,7 +57,7 @@ def get_train_test_dataset(nan_percent: str, test_percent: float):
     test_df.date = pd.to_datetime(test_df.date)
     train_nan_df.date = pd.to_datetime(train_nan_df.date)
     test_nan_df.date = pd.to_datetime(test_nan_df.date)
-    return train_df, test_df, train_nan_df, test_nan_df
+    return [((train_df, test_df, train_nan_df, test_nan_df), None)]
 
 
 def get_dataset(nan_percent: str):

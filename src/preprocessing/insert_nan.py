@@ -27,7 +27,7 @@ def insert_nan_train_test(file_name: str, train_percent: float, train_files: boo
     else:
         file_mode = "test"
 
-    for percent in nan_percents:
+    for percent in nan_percents[1:3]:
         main_df = pd.read_csv(
             Path(root + "datasets/train_test/{}_{}_{}.csv".format(file_name, file_mode, train_percent)))
         record_count = main_df.shape[0]
@@ -47,7 +47,7 @@ def insert_nan_train_test_related(file_name: str, source_file_name: str, train_p
     else:
         file_mode = "test"
 
-    for percent in nan_percents:
+    for percent in nan_percents[1:3]:
         main_df = pd.read_csv(
             Path(root + "datasets/train_test/{}_{}_{}.csv".format(file_name, file_mode, train_percent)))
         source_main_df = pd.read_csv(
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     source_file = "smart_star_hourly"
     train = 0.3
     # insert_nan(file)
-    # insert_nan_train_test(file, train)
-    # insert_nan_train_test(file, train, False)
+    insert_nan_train_test(source_file, train)
+    insert_nan_train_test(source_file, train, False)
     insert_nan_train_test_related(file, source_file, train)
     insert_nan_train_test_related(file, source_file, train, False)

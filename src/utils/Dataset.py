@@ -69,7 +69,7 @@ def load_all_methods_result():
 
     final_train = pd.DataFrame()
     final_test = pd.DataFrame()
-    for nan_percent in nan_percents_str[:1]:
+    for nan_percent in nan_percents_str[:3]:
         middle_train = pd.DataFrame()
         middle_test = pd.DataFrame()
         for model in all_methods:
