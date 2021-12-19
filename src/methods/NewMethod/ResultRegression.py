@@ -1,9 +1,7 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression, Lasso, SGDRegressor, ElasticNet, Ridge, BayesianRidge, \
-    PassiveAggressiveRegressor
+from sklearn.linear_model import LinearRegression, Lasso, SGDRegressor, ElasticNet, Ridge
 from sklearn.metrics import mean_absolute_error
-from sklearn.svm import SVR
 
 from src.preprocessing.air.load_dataset import load_air_dfs
 from src.utils.Dataset import load_all_error_dfs, load_all_methods_result
@@ -18,25 +16,25 @@ def train_model(train_x, test_x, train_y, test_y):
     # scaled_train_y = y_scaler.fit_transform(train_y)
 
     models = [
-        # LinearRegression(), Lasso(), SGDRegressor(), ElasticNet(), Ridge(),
-              # RandomForestRegressor(),
-              # ]
-              BayesianRidge(), PassiveAggressiveRegressor()]
+        LinearRegression(), Lasso(), SGDRegressor(), ElasticNet(), Ridge(),
+        RandomForestRegressor(),
+    ]
+    # BayesianRidge(), PassiveAggressiveRegressor()]
 
+    train_results = []
     results = []
     for model in models:
         # model = model.fit(train_x, scaled_train_y.ravel())
-        model = model.fit(train_x, train_y)
         # y_pred_train = y_scaler.inverse_transform(model.predict(train_x).reshape(-1, 1))
-        y_pred_train = model.predict(train_x).reshape(-1, 1)
         # y_pred_test = y_scaler.inverse_transform(model.predict(test_x).reshape(-1, 1))
+
+        model = model.fit(train_x, train_y)
+        y_pred_train = model.predict(train_x).reshape(-1, 1)
         y_pred_test = model.predict(test_x).reshape(-1, 1)
-        # print(str(model))
-        # print("train = ", mean_squared_error(train_y, y_pred_train))
-        result = mean_absolute_error(test_y, y_pred_test)
-        # print("test = ", result)
-        results.append(result)
-    return results
+
+        train_results.append(mean_absolute_error(train_y, y_pred_train))
+        results.append(mean_absolute_error(test_y, y_pred_test))
+    return train_results, results
 
 
 def print_best_method(user_train_error_dfs, user_test_error_dfs, best_methods):
@@ -56,8 +54,6 @@ def print_best_method(user_train_error_dfs, user_test_error_dfs, best_methods):
             best_error_test = temp_error
             best_error_col_test = col
     return [best_error, best_error_col, best_error_test, best_error_col_test]
-    # print("best train error = ", )
-    # print("best test error = ", )
 
 
 def train_regression(train_error_dfs, test_error_dfs, train_errors, test_errors):
@@ -69,7 +65,8 @@ def train_regression(train_error_dfs, test_error_dfs, train_errors, test_errors)
     train_error_dfs = train_error_dfs[required_columns]
     test_error_dfs = test_error_dfs[required_columns]
 
-    results = pd.DataFrame()
+    train_results_df = pd.DataFrame()
+    test_results_df = pd.DataFrame()
     # results_methods = pd.DataFrame()
     # for user_id in train_error_dfs["id"].unique():
     # user_train_error_dfs = train_error_dfs[train_error_dfs.id == user_id].drop(columns=["id"])
@@ -85,12 +82,16 @@ def train_regression(train_error_dfs, test_error_dfs, train_errors, test_errors)
     x_train = x_train[:int(x_train.shape[0] / 2)]
     y_train = y_train[:int(y_train.shape[0] / 2)]
 
-    a = train_model(x_train, x_test, y_train, y_test)
-    results = results.append(pd.Series(a), ignore_index=True)
+    train_result, test_result = train_model(x_train, x_test, y_train, y_test)
+    test_results_df = test_results_df.append(pd.Series(test_result), ignore_index=True)
+    train_results_df = train_results_df.append(pd.Series(train_result), ignore_index=True)
     # b = print_best_method(user_train_error_dfs, user_test_error_dfs, best_methods)
     # results_methods = results_methods.append(pd.Series(b), ignore_index=True)
 
-    print("best test mae = ", results.mean().min())
+    print("best train mae = ")
+    print(train_results_df)
+    print("best test mae = ")
+    print(test_results_df)
     print(print_best_method(train_error_dfs, test_error_dfs, best_methods))
 
 
