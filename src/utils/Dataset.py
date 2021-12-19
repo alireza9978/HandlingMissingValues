@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.preprocessing.insert_nan import nan_percents_str
 from src.preprocessing.load_dataset import get_train_test_dataset, get_train_test_dataset_triple
 from src.preprocessing.load_dataset import root
 
@@ -50,8 +49,7 @@ def save_error_two(temp_df: pd.DataFrame, nan_percent: str, method_name: str, me
     if not train:
         prefix = "test"
     path = root + f"results/errors/{prefix}_error_df_method_{method_name}_nan_{nan_percent}_{measure_params}.csv"
-    temp_df = temp_df.reset_index()
-    temp_df.to_csv(Path(path), index=False)
+    temp_df.to_csv(Path(path), index=True)
 
 
 def load_error_two(nan_percent: str, method_name: str, measure_params, train: bool = True):
@@ -59,17 +57,17 @@ def load_error_two(nan_percent: str, method_name: str, measure_params, train: bo
     if not train:
         prefix = "test"
     path = root + f"results/errors/{prefix}_error_df_method_{method_name}_nan_{nan_percent}_{measure_params}.csv"
-    temp_df = pd.read_csv(Path(path), index_col="index")
+    temp_df = pd.read_csv(Path(path), index_col=0)
     return temp_df
 
 
-def load_all_methods_result():
+def load_all_methods_result(nan_percents_str):
     from src.methods.BaseModel.Base import Base
     from src.utils.Methods import all_methods
 
     final_train = pd.DataFrame()
     final_test = pd.DataFrame()
-    for nan_percent in nan_percents_str[:3]:
+    for nan_percent in nan_percents_str:
         middle_train = pd.DataFrame()
         middle_test = pd.DataFrame()
         for model in all_methods:
@@ -82,30 +80,29 @@ def load_all_methods_result():
         middle_test["nan_percent"] = nan_percent
         final_train = pd.concat([middle_train, final_train])
         final_test = pd.concat([middle_test, final_test])
-    return final_train, final_test
+    return [(final_train, final_test)]
 
 
-def load_all_error_dfs(nan_percent):
+def load_all_error_dfs(nan_percent, data_frames):
     from src.methods.BaseModel.Base import Base
     from src.utils.Methods import all_methods
 
     final_train = None
     final_test = None
     for model in all_methods:
-        temp_train, temp_test = Base.load_error_dfs(model.get_name(), nan_percent, "mse", model.get_train_params())
+        temp_train, temp_test = Base.load_error_dfs(model.get_name(), nan_percent, "mae", model.get_train_params())
         if final_train is None:
             final_test = temp_test
             final_train = temp_train
         else:
             final_train = final_train.join(temp_train)
             final_test = final_test.join(temp_test)
-    data_frames = get_train_test_dataset(nan_percent, 0.3)
     final_test = final_test.join(data_frames[1][["usage", "id"]])
     final_train = final_train.join(data_frames[0][["usage", "id"]])
-    return final_train, final_test
+    return [(final_train, final_test)]
 
 
-def load_all_errors_triple():
+def load_all_errors_triple(nan_percents_str):
     from src.methods.BaseModel.Base import Base
     from src.utils.Methods import methods_trainable
 
