@@ -42,8 +42,8 @@ methods_trainable_modified_dataset = [
     LinearRegressionImputer,
 ]
 
-# all_methods = methods_trainable
-all_methods = methods_trainable + methods_trainable_modified_dataset
+all_methods = methods_trainable
+# all_methods = methods_trainable + methods_trainable_modified_dataset
 
 
 def fill_nan(temp_x: pd.DataFrame, temp_x_nan: pd.DataFrame, fill_nan_method, params=None) -> pd.DataFrame:
