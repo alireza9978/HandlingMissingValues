@@ -12,7 +12,7 @@ class Base(ABC):
     def __init__(self, inputs):
         data_frames, split = inputs
         # data_frames = self.select_one_user(99, data_frames)
-        data_frames = self.select_users([99, 12, 65, 35], data_frames)
+        # data_frames = self.select_users([99, 12, 65, 35], data_frames)
         train_df, test_df, train_nan_df, test_nan_df = data_frames
         self.split = split
         self.train_df = train_df
@@ -89,18 +89,17 @@ class Base(ABC):
         from src.preprocessing.load_dataset import root
         from src.utils.Dataset import save_error_two
         from src.utils.Methods import measures_name
+
         for train_param in self.train_error_dfs.keys():
             error_df = self.train_error_dfs[train_param]
+            test_error_df = self.test_error_dfs[train_param]
             if self.split is None:
                 save_error_two(error_df, nan_percent, name, train_param, train=True)
+                save_error_two(test_error_df, nan_percent, name, train_param, train=False)
             else:
                 save_error_two(error_df, nan_percent, name, train_param + "_" + self.split, train=True)
-        for train_param in self.test_error_dfs.keys():
-            error_df = self.test_error_dfs[train_param]
-            if self.split is None:
-                save_error_two(error_df, nan_percent, name, train_param, train=False)
-            else:
-                save_error_two(error_df, nan_percent, name, train_param + "_" + self.split, train=False)
+                save_error_two(test_error_df, nan_percent, name, train_param + "_" + self.split, train=False)
+
         temp_columns = ["params"] + measures_name
         self.test_errors.columns = temp_columns
         self.train_errors.columns = temp_columns
