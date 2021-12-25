@@ -104,5 +104,5 @@ def plot_results_df(results: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    temp_df = clean_result_df()
-    plot_results_df(temp_df)
+    clean_df = clean_result_df()
+    plot_results_df(clean_df)

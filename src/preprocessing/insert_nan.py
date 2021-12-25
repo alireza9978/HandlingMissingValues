@@ -27,7 +27,7 @@ def insert_nan_train_test(file_name: str, train_percent: float, train_files: boo
     else:
         file_mode = "test"
 
-    for percent in nan_percents[1:3]:
+    for percent in nan_percents:
         main_df = pd.read_csv(
             Path(root + "datasets/train_test/{}_{}_{}.csv".format(file_name, file_mode, train_percent)))
         record_count = main_df.shape[0]
@@ -47,7 +47,7 @@ def insert_nan_train_test_related(file_name: str, source_file_name: str, train_p
     else:
         file_mode = "test"
 
-    for percent in nan_percents[1:3]:
+    for percent in nan_percents:
         main_df = pd.read_csv(
             Path(root + "datasets/train_test/{}_{}_{}.csv".format(file_name, file_mode, train_percent)))
         source_main_df = pd.read_csv(
