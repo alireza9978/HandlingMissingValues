@@ -137,3 +137,5 @@ dmypy.json
 /saved_models/
 .idea
 /crawler
+/others_methods/GAIN/
+/others_methods/miwae/
