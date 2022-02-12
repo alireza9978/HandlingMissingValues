@@ -25,5 +25,6 @@ def load_dataset():
     temp_df["id"] = 1
     return temp_df
 
+
 if __name__ == '__main__':
     load_dataset()
