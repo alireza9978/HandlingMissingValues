@@ -2,8 +2,11 @@ import datetime
 import os
 import numpy as np
 import pandas as pd
+import swifter
 
 from src.preprocessing.load_dataset import root
+
+_ = swifter.config
 
 
 def convert_users_users():
@@ -12,23 +15,28 @@ def convert_users_users():
                     'NISysABP', 'Na', 'PaCO2', 'PaO2', 'Platelets', 'SysABP', 'Temp', 'TroponinT', 'Urine', 'WBC',
                     'Weight', 'pH']
     main_df = pd.DataFrame()
-    root_path = root + "datasets/PhysioNet/set-a/"
-    for item in os.listdir(root_path):
+    root_path = root + "datasets/physionet/downloaded/set-a/"
+    items = os.listdir(root_path)
+    count = len(items)
+    for index, item in enumerate(items):
         if item.endswith(".txt"):
             user_id = item.split(".")[0]
-            temp_df = pd.DataFrame(index=np.arange(0, 48 * 60), columns=data_columns)
             item_path = root_path + item
             f = open(item_path, "r")
             file_lines = f.readlines()
-            for line in file_lines[7:]:
-                time, feature_name, value = line.strip().split(",")
-                hours, minutes = time.split(":")
-                index = int(hours) * 60 + int(minutes)
-                temp_df.loc[index, feature_name] = value
-            temp_df.index = temp_df.index.to_series().apply(lambda x: pd.to_timedelta(x, unit="minute"))
-            temp_df["user_id"] = user_id
-            main_df = main_df.append(temp_df)
-    main_df.to_csv(root + "datasets/PhysioNet/dataset.csv")
+            temp_df = pd.DataFrame(file_lines[7:])
+            if temp_df.shape[0] > 0:
+                temp_cleaned_values = temp_df.swifter.progress_bar(False).apply(lambda x: str(x[0]).strip().split(","),
+                                                                                axis=1)
+                temp_df = pd.DataFrame(temp_cleaned_values.to_list(), columns=["time", "name", "value"])
+                temp_df["value"] = temp_df["value"].astype(float)
+                temp_df["name"] = temp_df["name"].astype("category")
+                temp_df["user_id"] = int(user_id)
+                temp_df["hour"] = temp_df["time"].swifter.progress_bar(False).apply(lambda x: int(x[:2]))
+                temp_df["minute"] = temp_df["time"].swifter.progress_bar(False).apply(lambda x: int(x[3:]))
+                main_df = main_df.append(temp_df[["hour", "minute", "user_id", "name", "value"]])
+            print("progress: ", index, count)
+    main_df.to_csv(root + "datasets/physionet/dataset.csv", index=False)
 
 
 if __name__ == '__main__':
