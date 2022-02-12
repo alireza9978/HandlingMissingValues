@@ -18,7 +18,8 @@ class MovingMean(Base):
 
     @staticmethod
     def get_train_params():
-        return [4, 6, 8, 10, 12, 24, 48, 168, 720]
+        # return [4, 6, 8, 10, 12, 24, 48, 168, 720]
+        return [4, 6]
 
     @staticmethod
     def fill_nan(temp_df, train_param):
@@ -34,7 +35,7 @@ class MovingMean(Base):
         half_window_size = int(window_size / 2)
 
         def inner_window_filler(nan_row):
-            row_index = nan_row["row_index"]
+            row_index = int(nan_row["row_index"])
             usage_window = np.concatenate([temp_array[row_index + 1: row_index + 1 + half_window_size],
                                            temp_array[row_index - half_window_size:row_index]])
             usage_window = usage_window[~np.isnan(usage_window)]

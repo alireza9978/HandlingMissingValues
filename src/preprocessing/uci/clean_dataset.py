@@ -22,6 +22,7 @@ def clean_dataset():
 
 def load_dataset():
     temp_df = pd.read_csv(target_file_path, index_col="date", date_parser=pd.to_datetime, parse_dates=["date"])
+    temp_df["id"] = 1
     return temp_df
 
 if __name__ == '__main__':

@@ -36,7 +36,7 @@ class WeightedMean(Base):
         weights = signal.gaussian(window_size, std=std)
 
         def inner_window_filler(nan_row):
-            row_index = nan_row["row_index"] + half_window_size
+            row_index = int(nan_row["row_index"]) + half_window_size
             usage_window = np.concatenate([temp_array[row_index + 1: row_index + 1 + half_window_size],
                                            temp_array[row_index - half_window_size:row_index]])
 
