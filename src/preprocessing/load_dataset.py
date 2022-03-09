@@ -6,7 +6,7 @@ import pandas as pd
 from src.preprocessing.convert_timestamps import convert_date
 
 # root = "E:/HandlingMissingValues/"
-root = "/home/alireza/PycharmProjects/HandlingMissingValues/"
+root = "/home/alireza/projects/python/HandlingMissingValues/"
 # root = "/home/ippbx/PycharmProjects/HandlingMissingValues/"
 # root = 'h:/Projects/Datasets/Smart/'
 

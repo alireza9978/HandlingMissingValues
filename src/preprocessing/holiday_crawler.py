@@ -8,6 +8,7 @@ if __name__ == '__main__':
     country = "country=IE"
 
     urls = [
+        "https://calendarific.com/api/v2/holidays?{}&{}&year=2023".format(api_key, country),
         "https://calendarific.com/api/v2/holidays?{}&{}&year=2022".format(api_key, country),
         "https://calendarific.com/api/v2/holidays?{}&{}&year=2021".format(api_key, country),
         "https://calendarific.com/api/v2/holidays?{}&{}&year=2020".format(api_key, country),
@@ -31,7 +32,7 @@ if __name__ == '__main__':
         response = requests.request("GET", url, headers=headers, data=payload)
         responses.append(response.json())
 
-    df = pd.DataFrame(pd.date_range(start='1/1/2012', end='1/1/2022').to_series(), columns=['date'])
+    df = pd.DataFrame(pd.date_range(start='1/1/2012', end='1/1/2023').to_series(), columns=['date'])
     df['day_of_week'] = df.date.dt.dayofweek
     df['holiday'] = False
     df['weekend'] = False

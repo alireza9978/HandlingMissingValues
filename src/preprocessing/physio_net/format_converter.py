@@ -10,10 +10,6 @@ _ = swifter.config
 
 
 def convert_users_users():
-    data_columns = ['ALP', 'ALT', 'AST', 'Albumin', 'BUN', 'Bilirubin', 'Creatinine', 'DiasABP', 'FiO2', 'GCS',
-                    'Glucose', 'HCO3', 'HCT', 'HR', 'K', 'Lactate', 'MAP', 'MechVent', 'Mg', 'NIDiasABP', 'NIMAP',
-                    'NISysABP', 'Na', 'PaCO2', 'PaO2', 'Platelets', 'SysABP', 'Temp', 'TroponinT', 'Urine', 'WBC',
-                    'Weight', 'pH']
     main_df = pd.DataFrame()
     root_path = root + "datasets/physionet/downloaded/set-a/"
     items = os.listdir(root_path)
