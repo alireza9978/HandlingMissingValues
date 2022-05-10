@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.preprocessing.load_dataset import get_dataset_irish, root
+from src.preprocessing.smart_star.load_dataset import get_dataset_irish, root
 
 
 def save_start_date(temp_df: pd.DataFrame, name: str):

@@ -1,11 +1,10 @@
 import pandas as pd
-from sklearn.linear_model import SGDRegressor, LassoCV
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 
-from src.preprocessing.load_dataset import get_dataset_auto, root
+from src.preprocessing.smart_star.load_dataset import get_dataset_auto, root
 from src.utils.Dataset import get_all_error_dfs
 from src.utils.Methods import measures_name
 

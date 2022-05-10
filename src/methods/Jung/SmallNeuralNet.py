@@ -5,9 +5,8 @@ import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.python.data.ops.dataset_ops import DatasetV2
 
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
+from src.preprocessing.smart_star.load_dataset import get_dataset_fully_modified_date, root
 
 
 class SmallNeuralNet:

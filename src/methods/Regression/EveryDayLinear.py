@@ -5,9 +5,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
-from src.preprocessing.load_dataset import get_complete_dataset
-from src.utils.parallelizem import apply_parallel
-from sklearn.decomposition import PCA
+from src.preprocessing.smart_star.load_dataset import get_complete_dataset
 
 
 def fill_nan(temp_df: pd.DataFrame):

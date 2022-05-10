@@ -1,6 +1,5 @@
 from src.preprocessing.insert_nan import nan_percents_str
-from src.preprocessing.load_dataset import get_train_test_dataset, get_train_test_fully_modified_date, \
-    get_train_test_dataset_triple
+from src.preprocessing.smart_star.load_dataset import get_train_test_dataset, get_train_test_fully_modified_date
 from src.utils.Methods import methods_trainable, methods_trainable_modified_dataset
 
 if __name__ == '__main__':

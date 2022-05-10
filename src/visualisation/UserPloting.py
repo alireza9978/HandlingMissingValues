@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from src.preprocessing.load_dataset import get_dataset, root
+from src.preprocessing.smart_star.load_dataset import get_dataset, root
 
 
 def plot_random_users_usage(temp_df: pd.DataFrame):

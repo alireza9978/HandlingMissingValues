@@ -6,12 +6,10 @@ from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-from src.preprocessing.load_dataset import get_dataset
+from src.preprocessing.smart_star.load_dataset import get_dataset
 from src.utils.Dataset import get_random_user, load_error, get_all_error_dfs, get_user_by_id
-from src.utils.Methods import method_name_single_feature, method_name_single_feature_param, \
-    method_single_feature_param_value
 from src.utils.Methods import measures_name
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 
 
 def calculate_feature(temp_df: pd.DataFrame, window_size: int):

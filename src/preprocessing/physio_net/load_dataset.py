@@ -1,7 +1,7 @@
 import pandas as pd
 import ujson as json
 
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 
 data_columns = ['ALP', 'ALT', 'AST', 'Albumin', 'BUN', 'Bilirubin', 'Cholesterol', 'Creatinine', 'DiasABP', 'FiO2',
                 'GCS', 'Glucose', 'HCO3', 'HCT', 'HR', 'K', 'Lactate', 'MAP', 'MechVent', 'Mg', 'NIDiasABP', 'NIMAP',

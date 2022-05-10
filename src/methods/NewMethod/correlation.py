@@ -1,4 +1,4 @@
-from src.preprocessing.load_dataset import get_dataset
+from src.preprocessing.smart_star.load_dataset import get_dataset
 from src.utils.Dataset import load_error
 
 x, x_nan = get_dataset("0.1")

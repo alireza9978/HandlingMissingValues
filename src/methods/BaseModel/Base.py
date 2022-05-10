@@ -86,7 +86,7 @@ class Base(ABC):
         pass
 
     def save_result(self, name, nan_percent):
-        from src.preprocessing.load_dataset import root
+        from src.preprocessing.smart_star.load_dataset import root
         from src.utils.Dataset import save_error_two
         from src.utils.Methods import measures_name
 
@@ -114,7 +114,7 @@ class Base(ABC):
 
     @staticmethod
     def load_errors(name, nan_percent):
-        from src.preprocessing.load_dataset import root
+        from src.preprocessing.smart_star.load_dataset import root
         test_result = pd.read_csv(root + f"results/methods/test_result_{name}_{nan_percent}.csv")
         train_result = pd.read_csv(root + f"results/methods/train_result_{name}_{nan_percent}.csv")
         return train_result, test_result

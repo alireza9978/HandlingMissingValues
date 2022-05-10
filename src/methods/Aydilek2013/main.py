@@ -5,7 +5,7 @@ from fcm_estimator import FCMeansEstimator
 from genetic_algorithm import GeneticAlgorithm
 from src.methods.Aydilek2013.svr_estimator import SVREstimator
 # Print the results and RMSE value
-from src.preprocessing.load_dataset import get_dataset
+from src.preprocessing.smart_star.load_dataset import get_dataset
 
 
 def show_results(true_values, predicted_values):

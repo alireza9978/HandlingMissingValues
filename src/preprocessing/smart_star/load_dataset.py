@@ -3,10 +3,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.preprocessing.convert_timestamps import convert_date
+from src.preprocessing.smart_star.convert_timestamps import convert_date
 
 # root = "E:/HandlingMissingValues/"
+
 root = "/home/alireza/projects/python/HandlingMissingValues/"
+
+
 # root = "/home/ippbx/PycharmProjects/HandlingMissingValues/"
 # root = 'h:/Projects/Datasets/Smart/'
 
@@ -20,7 +23,6 @@ def get_train_test_fully_modified_date(nan_percent: str, test_percent: float):
     test_nan_df = pd.read_csv(
         Path(root + "datasets/train_test/with_nan/{}_test_{}_nan_{}.csv".format(file_name, test_percent, nan_percent)))
     return [((train_df, test_df, train_nan_df, test_nan_df), None)]
-
 
 
 def get_train_test_dataset_triple(nan_percent: str):
@@ -126,34 +128,5 @@ def generate_small_pandas_dataset():
     return main_df
 
 
-def load_weather_dataset():
-    weather_df = pd.read_csv(Path(root + "datasets/smart_star_weather.csv"))
-    weather_df.date = pd.to_datetime(weather_df.date)
-    weather_df = weather_df.drop(columns=["icon", "summary", "time"])
-    weather_df = weather_df.set_index("date").resample("1H").mean().reset_index()
-    return weather_df
 
 
-def add_holiday_weather_convert_date():
-    main_df = pd.read_csv(Path(root + "datasets/smart_star_hourly.csv"))
-    main_df.date = pd.to_datetime(main_df.date)
-    holiday_df = pd.read_csv(Path(root + "datasets/holiday.csv"))
-    holiday_df["date"] = pd.to_datetime(holiday_df.date)
-    holiday_df = holiday_df.set_index("date")
-    main_df["only_date"] = pd.to_datetime(main_df.date.dt.date)
-    main_df = main_df.set_index("only_date").join(holiday_df).reset_index(drop=True)
-
-    weather_df = load_weather_dataset()
-    weather_df = weather_df.ffill()
-    weather_df = weather_df.set_index("date")
-    main_df = main_df.set_index("date").join(weather_df).reset_index(drop=False)
-
-    main_df = main_df.sort_values(["id", "date"])
-    main_df = main_df.reset_index(drop=True)
-    main_df = convert_date(main_df)
-
-    main_df.to_csv(Path(root + "datasets/smart_star_hourly_fully_modified.csv"), index=False)
-
-
-if __name__ == '__main__':
-    add_holiday_weather_convert_date()

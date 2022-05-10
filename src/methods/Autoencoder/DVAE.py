@@ -7,7 +7,7 @@ from keras.models import Model
 from sklearn.preprocessing import MinMaxScaler
 
 from src.measurements.Measurements import mean_square_error, evaluate_dataframe_two
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date_auto
+from src.preprocessing.smart_star.load_dataset import get_dataset_fully_modified_date_auto
 
 
 class DVAE:
@@ -184,9 +184,6 @@ def fill_nan(temp_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    from src.utils.Methods import fill_nan as fn
-    from src.utils.Dataset import get_random_user
-
     main_df = get_dataset_fully_modified_date_auto("0.05")
     main_df = main_df[main_df.id == 99]
     main_df.drop(columns=['year', 'winter', 'spring', 'summer', 'fall', 'holiday', 'weekend', 'temperature',

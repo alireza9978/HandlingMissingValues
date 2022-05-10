@@ -1,21 +1,21 @@
 import datetime
 import os
-from tempfile import tempdir
 from pathlib import Path
 
 import pandas as pd
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 
 years = ["2014", "2015", "2016"]
 
 
 def merge_usage():
-    root_path = root + "datasets/apartment/"
+    root_path = "/mnt/6EFAD426FAD3E7FB/datasets/smart/apartment/"
     main_df = pd.DataFrame()
     for year in years:
         for item in os.listdir(root_path + year):
             if item.endswith(".csv"):
                 item_path = root_path + year + "/" + item
+                print(item_path)
                 temp_df = pd.read_csv(item_path, header=None)
                 temp_df.columns = ["date", "usage"]
                 temp_df.date = pd.to_datetime(temp_df.date)
@@ -23,11 +23,11 @@ def merge_usage():
                 main_df = main_df.append(temp_df)
 
     main_df = main_df.sort_values(by=["id", "date"])
-    main_df.to_csv(root + "datasets/smart_star.csv", index=False)
+    main_df.to_csv(root + "datasets/smart_star/smart_star.csv", index=False)
 
 
 def merge_weather():
-    root_path = root + "datasets/apartment-weather/"
+    root_path = "/mnt/6EFAD426FAD3E7FB/datasets/smart/apartment-weather/"
     main_df = pd.DataFrame(pd.date_range(start='2014-01-01 08:00:00', end='2017-01-01 07:00:00', freq="1H").to_series(),
                            columns=['date'])
     main_df.date = pd.to_datetime(main_df.date)
@@ -45,7 +45,7 @@ def merge_weather():
 
     main_df = main_df.ffill()
     main_df = main_df.reset_index()
-    main_df.to_csv(root + "datasets/smart_star_weather.csv", index=False)
+    main_df.to_csv(root + "datasets/smart_star/smart_star_weather.csv", index=False)
 
 
 def merge_usage_london():
@@ -65,4 +65,5 @@ def merge_usage_london():
 
 
 if __name__ == '__main__':
+    # merge_usage()
     merge_weather()

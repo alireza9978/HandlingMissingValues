@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
 from src.methods.Jung.SmallNeuralNet import SmallNeuralNet
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
+from src.preprocessing.smart_star.load_dataset import get_dataset_fully_modified_date, root
 
 class MultiLayerPerceptron:
 

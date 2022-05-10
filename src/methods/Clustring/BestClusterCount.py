@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date, root
+from src.preprocessing.smart_star.load_dataset import get_dataset_fully_modified_date, root
 from src.utils.parallelizem import apply_parallel
 
 

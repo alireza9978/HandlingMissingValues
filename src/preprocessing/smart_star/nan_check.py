@@ -1,5 +1,5 @@
 import os
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 import pandas as pd
 
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from src.measurements.Measurements import *
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 from src.utils.Dataset import load_all_methods_result
 from src.utils.Methods import measures_name
 

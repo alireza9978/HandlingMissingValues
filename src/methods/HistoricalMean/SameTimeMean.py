@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
-from src.preprocessing.load_dataset import get_dataset
+from src.preprocessing.smart_star.load_dataset import get_dataset
 
 
 def fill_nan(temp_df: pd.DataFrame, window_size):

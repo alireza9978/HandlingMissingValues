@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from src.methods.BaseModel.Base import Base
-from src.preprocessing.load_dataset import get_train_test_dataset
+from src.preprocessing.smart_star.load_dataset import get_train_test_dataset
 
 
 class MovingMean(Base):

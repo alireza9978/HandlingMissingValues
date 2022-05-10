@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from src.preprocessing.insert_nan import nan_percents, nan_percents_str
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 from src.utils.parallelizem import apply_parallel
 from visualisation.ErrorPloting import clean_result_df
 

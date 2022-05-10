@@ -3,7 +3,7 @@ from fcmeans import FCM
 from sklearn.preprocessing import MinMaxScaler
 
 from src.methods.BaseModel.Base import Base
-from src.preprocessing.load_dataset import get_train_test_fully_modified_date
+from src.preprocessing.smart_star.load_dataset import get_train_test_fully_modified_date
 
 
 class FuzzyCMean(Base):

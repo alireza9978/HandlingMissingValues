@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.preprocessing.load_dataset import get_train_test_dataset, get_train_test_dataset_triple
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import get_train_test_dataset_triple
+from src.preprocessing.smart_star.load_dataset import root
 
 
 # from src.utils.Methods import method_name_single_feature, method_name_single_feature_param, \

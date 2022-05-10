@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pandas import DateOffset
 
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 
 file_path = root + "datasets/power/uci/household_power_consumption.txt"
 target_file_path = root + "datasets/power/uci/dataset.csv"

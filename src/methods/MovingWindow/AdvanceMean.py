@@ -5,7 +5,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics.pairwise import euclidean_distances
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
-from src.preprocessing.load_dataset import get_dataset_date_modified
+from src.preprocessing.smart_star.load_dataset import get_dataset_date_modified
 from src.utils.parallelizem import apply_parallel
 
 

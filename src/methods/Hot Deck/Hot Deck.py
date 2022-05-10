@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 
 from src.measurements.Measurements import mean_square_error, evaluate_dataframe
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date
+from src.preprocessing.smart_star.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
 
 

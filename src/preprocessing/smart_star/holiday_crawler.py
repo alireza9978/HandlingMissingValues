@@ -1,7 +1,7 @@
 import pandas as pd
 import requests
 
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 
 if __name__ == '__main__':
     api_key = "api_key=738864c7e21a512f880681fd2e0c5f735f7a7c6b"

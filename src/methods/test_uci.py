@@ -1,4 +1,4 @@
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 from src.preprocessing.uci.clean_dataset import load_dataset
 from src.methods.Simple.Interpolation import Interpolation
 from src.methods.MovingWindow.MovingMean import MovingMean

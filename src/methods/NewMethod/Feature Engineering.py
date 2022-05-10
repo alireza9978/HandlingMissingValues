@@ -8,8 +8,8 @@ from keras.layers import Dense, Input
 from keras.models import Model
 from sklearn.preprocessing import MinMaxScaler
 
-from src.preprocessing.load_dataset import get_dataset
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import get_dataset
+from src.preprocessing.smart_star.load_dataset import root
 from src.utils.Dataset import get_user_by_id
 
 

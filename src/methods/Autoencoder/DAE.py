@@ -7,7 +7,7 @@ from keras.models import Model
 from sklearn.preprocessing import MinMaxScaler
 
 from src.measurements.Measurements import mean_square_error, evaluate_dataframe_two
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date_auto
+from src.preprocessing.smart_star.load_dataset import get_dataset_fully_modified_date_auto
 
 
 class DAE:

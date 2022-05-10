@@ -8,7 +8,7 @@ from keras.models import Sequential
 from sklearn.preprocessing import MinMaxScaler
 
 from src.measurements.Measurements import evaluate_dataframe, mean_square_error
-from src.preprocessing.load_dataset import get_dataset_fully_modified_date
+from src.preprocessing.smart_star.load_dataset import get_dataset_fully_modified_date
 from src.utils.parallelizem import apply_parallel
 
 

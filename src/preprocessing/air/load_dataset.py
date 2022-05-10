@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.preprocessing.load_dataset import root
+from src.preprocessing.smart_star.load_dataset import root
 
 
 def load_air_dfs():

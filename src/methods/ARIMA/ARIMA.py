@@ -6,7 +6,7 @@ from statsmodels.tsa.arima.model import ARIMA
 
 from src.measurements.Measurements import evaluate_dataframe_two
 from src.methods.BaseModel.Base import Base
-from src.preprocessing.load_dataset import get_train_test_dataset
+from src.preprocessing.smart_star.load_dataset import get_train_test_dataset
 
 
 class Arima(Base):
