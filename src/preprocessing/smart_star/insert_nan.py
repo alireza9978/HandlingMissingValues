@@ -15,13 +15,13 @@ nan_percents_str = ["0.01", "0.05", "0.1", "0.15", "0.2", ]
 
 def insert_nan(file_name: str):
     for percent in nan_percents:
-        main_df = pd.read_csv(Path(root + "datasets/{}.csv".format(file_name)))
+        main_df = pd.read_csv(Path(root + "datasets/smart_star/{}.csv".format(file_name)))
         record_count = main_df.shape[0]
         random_index = np.random.choice(range(record_count), int(record_count * percent), replace=False)
         main_df.loc[random_index, "usage"] = np.nan
         print("nan percent = ", percent)
         print(main_df.isna().sum())
-        main_df.to_csv(Path(root + "datasets/with_nan/{}_{}.csv".format(file_name, percent)), index=False)
+        main_df.to_csv(Path(root + "datasets/smart_star/with_nan/{}_{}.csv".format(file_name, percent)), index=False)
 
 
 def insert_nan_train_test(file_name: str, train_percent: float, train_files: bool = True):
@@ -67,11 +67,11 @@ def insert_nan_train_test_related(file_name: str, source_file_name: str, train_p
 
 
 if __name__ == '__main__':
-    file = "smart_star_hourly_fully_modified"
+    file = "smart_star_hourly_final_with_date"
     source_file = "smart_star_hourly_final"
     train = 0.3
-    # insert_nan(file)
-    insert_nan_train_test(source_file, train)
-    insert_nan_train_test(source_file, train, False)
+    insert_nan(file)
+    # insert_nan_train_test(source_file, train)
+    # insert_nan_train_test(source_file, train, False)
     # insert_nan_train_test_related(file, source_file, train)
     # insert_nan_train_test_related(file, source_file, train, False)
