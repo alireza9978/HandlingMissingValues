@@ -98,12 +98,16 @@ def smart_star():
     jsons = []
     for temp_user_id in temp_user_ids:
         user_df = temp_df[temp_df.id == temp_user_id]
-        user_df = user_df.iloc[:int(user_df.shape[0] * 0.1)]
         user_df = user_df.reset_index(drop=True)
+        user_df["week"] = user_df.date.dt.isocalendar().week
+        temp_count = user_df[["year", "week", "id"]].groupby(["year", "week"]).count()
+        temp_count = temp_count[(temp_count == 168).id].reset_index()
         user_df = user_df.set_index("date").drop(columns=["id"])
-        temp_json = convert_table_to_json(user_df)
-        temp_json["label"] = 0
-        jsons.append(json.dumps(temp_json) + "\n")
+        for index, row in temp_count.iterrows():
+            temp_json = convert_table_to_json(
+                user_df[(user_df.year == row.year) & (user_df.week == row.week)].drop(columns=["week"]))
+            temp_json["label"] = 0
+            jsons.append(json.dumps(temp_json) + "\n")
 
     f = open(root + "datasets/smart_star/brits.txt", "w")
     f.writelines(jsons)
